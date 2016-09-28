@@ -6,6 +6,8 @@ public class Branch : MonoBehaviour {
     public enum branchType { A1, A2, B1, B2 }
     private branchType myType;
 
+    public Branch branchPrefab;
+
     private static MaterialsList branchMaterials;
     private static int A1Count = 0;
     private static int A2Count = 0;
@@ -51,7 +53,7 @@ public class Branch : MonoBehaviour {
 
     private void SpawnNewBranch (branchType newType)
     {
-        Branch newBranch = new GameObject().AddComponent<Branch>();
+        Branch newBranch = Instantiate(branchPrefab) as Branch;
         newBranch.transform.position = outSpawn.position;
         newBranch.transform.SetParent(transform);
         newBranch.SetupBranch(newType);
