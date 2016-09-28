@@ -130,9 +130,29 @@ Prefab:
       propertyPath: m_RootOrder
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 114000012554392438, guid: 06c3f8a208a6676428ff1d2da4c8a065,
+        type: 2}
+      propertyPath: branchMaterials
+      value: 
+      objectReference: {fileID: 2069906086}
+    - target: {fileID: 114000012554392438, guid: 06c3f8a208a6676428ff1d2da4c8a065,
+        type: 2}
+      propertyPath: main
+      value: 
+      objectReference: {fileID: 1996698145}
+    - target: {fileID: 1000010673897986, guid: 06c3f8a208a6676428ff1d2da4c8a065, type: 2}
+      propertyPath: m_Name
+      value: A1 Branch 1 Initiator
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: 06c3f8a208a6676428ff1d2da4c8a065, type: 2}
   m_IsPrefabParent: 0
+--- !u!114 &1319671455 stripped
+MonoBehaviour:
+  m_PrefabParentObject: {fileID: 114000012554392438, guid: 06c3f8a208a6676428ff1d2da4c8a065,
+    type: 2}
+  m_PrefabInternal: {fileID: 409687146}
+  m_Script: {fileID: 11500000, guid: f6e4382b6548e1b439c952df0edde260, type: 3}
 --- !u!1 &1996698139
 GameObject:
   m_ObjectHideFlags: 0
@@ -142,8 +162,6 @@ GameObject:
   m_Component:
   - 4: {fileID: 1996698144}
   - 20: {fileID: 1996698143}
-  - 124: {fileID: 1996698142}
-  - 92: {fileID: 1996698141}
   - 81: {fileID: 1996698140}
   - 114: {fileID: 1996698145}
   m_Layer: 0
@@ -155,20 +173,6 @@ GameObject:
   m_IsActive: 1
 --- !u!81 &1996698140
 AudioListener:
-  m_ObjectHideFlags: 0
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 0}
-  m_GameObject: {fileID: 1996698139}
-  m_Enabled: 1
---- !u!92 &1996698141
-Behaviour:
-  m_ObjectHideFlags: 0
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 0}
-  m_GameObject: {fileID: 1996698139}
-  m_Enabled: 1
---- !u!124 &1996698142
-Behaviour:
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
@@ -215,7 +219,7 @@ Transform:
   m_PrefabInternal: {fileID: 0}
   m_GameObject: {fileID: 1996698139}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 9.1, z: -18.3}
+  m_LocalPosition: {x: 0, y: 13.4, z: -28.99}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children: []
@@ -232,6 +236,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: eae6a4c3e1d43834da55f5b4a0089a64, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  initiator: {fileID: 1319671455}
 --- !u!1 &2069906085
 GameObject:
   m_ObjectHideFlags: 0

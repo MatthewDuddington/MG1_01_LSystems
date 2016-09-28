@@ -150,6 +150,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   branchPrefab: {fileID: 114000012554392438}
+  branchMaterials: {fileID: 0}
+  main: {fileID: 0}
+  myMesh: {fileID: 23000010821373226}
 --- !u!114 &114000012795800300
 MonoBehaviour:
   m_ObjectHideFlags: 1
