@@ -6,12 +6,13 @@ public class Branch : MonoBehaviour {
     public enum branchType { A1, A2, B1, B2 }
     private branchType myType;
 
+    // All public var as using FindObject is expensive for lots of calls.
     public Branch branchPrefab;
     public MaterialsList branchMaterials;
     public Main main;
     public MeshRenderer myMesh;
 
-    private static int A1Count = 1;
+    private static int A1Count = 1; // Starts at 1 because one of these is the initiator which is pre spawned in the scene.
     private static int A2Count = 0;
     private static int B1Count = 0;
     private static int B2Count = 0;

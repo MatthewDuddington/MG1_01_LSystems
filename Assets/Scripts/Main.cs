@@ -8,7 +8,8 @@ public class Main : MonoBehaviour {
     public delegate void TriggerBranchesDelegate();
     public TriggerBranchesDelegate triggerBranchesEvent;
 	
-	void Update () {
+	void Update ()
+    {
 	    if (Input.GetKeyDown(KeyCode.Space))
         {
             // Process triggerBranchesEvent subscribers - triggers their next set of branches.
