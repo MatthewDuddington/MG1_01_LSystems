@@ -6,6 +6,6 @@
     <ClInclude Include="l_system_tree.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="main.cpp" />
+    <ClCompile Include="mainifest.cpp" />
   </ItemGroup>
 </Project>

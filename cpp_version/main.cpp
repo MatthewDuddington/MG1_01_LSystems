@@ -1,5 +1,7 @@
 #pragma once
 
+#include "../octet/src/octet.h"
+
 #include <string>
 #include <vector>
 
@@ -22,7 +24,7 @@ int main(int argc, char **argv)
   #endif
 
   LSystemApp app;
-
+  app.Init();
   app.MainLoop();
 
   return 0;

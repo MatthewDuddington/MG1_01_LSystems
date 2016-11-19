@@ -20,7 +20,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="l_system_app.h" />
-    <ClCompile Include="main.cpp">
+    <ClCompile Include="mainifest.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
       <FileType>CppHeader</FileType>
     </ClCompile>
@@ -30,6 +30,7 @@
     <ProjectGuid>{ECDAFA85-4F12-4B96-9B82-FFA9F047BA56}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>gles2triangle</RootNamespace>
+    <ProjectName>LSystems</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">

@@ -2,45 +2,66 @@
 
 class TreeRecipe {
 
-  std::string axiom_; // Starting seed
-  int order_; // Number of iterations
-  float axiom_length_;
-  float randomise_length_;
-  float axiom_width_;
-  float angle_Left_;
-  float angle_right_;
-  float randomise_angle_;
-  float gravity_;
+  // Possible drawing actions
+  // Define here to avoid circular dependency with recipe
+public: enum Action {
+    DRAW_FORWARD,
+    ROTATE_LEFT,
+    ROTATE_RIGHT,
+    SAVE_POSITION,
+    LOAD_POSITION
+  };
 
-  struct L_rule
+private:
+  std::string axiom_;       // Starting seed
+  int order_;               // Number of iterations
+  float axiom_length_;      // Starting branch size
+  float randomise_length_;  // Amount to vary size by
+  float axiom_width_;       // Starting branch cercumference
+  float angle_Left_;        // Amount to rotate for left direction branches
+  float angle_right_;       // Amount to rotate for right direction branches
+  float randomise_angle_;   // Amount to vary branch roatation
+  float gravity_;           // Proportion to droop based on distance from trunk
+
+  struct SeedRule
   {
     char variable;
     std::string replacement_symbols;
   };
 
-  L_rule rule1 = { 'A', "ABA" };
-  L_rule rule2 = { 'B', "AA" };
-  std::vector<L_rule> rules;
+  struct DrawRule
+  {
+    char constant;
+    Action action;
+  };
+
+  std::vector<SeedRule> seed_rules;
+  // TODO User input for rules
+  SeedRule rule1 = { 'A', "ABA" };
+  SeedRule rule2 = { 'B', "AA" };
 
   std::string seed_;
-  std::string new_seed_buffer;
 
-  void process_rules(std::vector<L_rule> rules, std::string &seed) {
-    for (int j = 0; j < (int)seed.length(); j++) {
-      for (int i = 0; i < (int)rules.size(); i++) {
-        if (seed.at(j) == rules.at(i).variable) {
-          new_seed_buffer.append(rules.at(i).replacement_symbols);
+  void process_rules(std::vector<SeedRule> seed_rules, std::string &seed) {
+    // Store updated seed here
+    std::string new_seed_buffer;
+
+    for (int j = 0; j < (int)seed.length(); j++) {   // For each character in the seed...
+      for (int i = 0; i < (int)seed_rules.size(); i++) {  // ...and each rule in the collection.
+        if (seed.at(j) == seed_rules.at(i).variable) {    // If the character matches one of our rule variables
+          new_seed_buffer.append(seed_rules.at(i).replacement_symbols);
           break;
         }
       }
     }
+
     seed = new_seed_buffer;
-    printf(seed.data());
+    printf(seed.data());  // Debug
   }
 
 public:
   // Constructor
-  tree_recipe() {
+  TreeRecipe() {
 
   }
 
@@ -56,13 +77,13 @@ public:
     randomise_angle_ = 0;
     gravity_ = 1.8f;
 
-    rules = { rule1, rule2 };
+    seed_rules = { rule1, rule2 };
 
     // Set the starting seed.
     seed_ = axiom_;
 
     // Generate the instruction set for building the tree
-    process_rules(rules, seed_);
+    process_rules(seed_rules, seed_);
   }
 
   std::string seed() {

@@ -13,10 +13,18 @@
   #include "GLUT/glut.h"
 #endif
 
-namespace LSys {
+namespace octet {
 
-  class LSystemTree
-  {
+  class Tree {
+
+    TreeRecipe recipe;
+
+    // Conceptual 'turtle' for when processing recipe
+    struct Turtle {
+      vec3 position;
+      float rotation;
+    };
+
     float axiom_node_pos_x = 0;
     float axiom_node_pos_y = 0;
 
