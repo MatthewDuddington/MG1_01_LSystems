@@ -24,11 +24,12 @@ private:
   float randomise_angle_;   // Amount to vary branch roatation
   float gravity_;           // Proportion to droop based on distance from trunk
 
+  // Struct to contain rules of both seed generation and drawing process
   struct Rule
   {
     char variable;
-    std::string replacement_symbols = "";
-    Action action = NONE;
+    std::string replacement_symbols;
+    Action action = NONE;  // Only set to a different value if used for drawing process
   };
 
   std::vector<Rule> rules_;
@@ -36,20 +37,20 @@ private:
   std::string seed_;
 
   void process_rules(std::vector<Rule> rules, std::string &seed) {
-    // Store new seed here as it is being built.
+    // Store new seed here as it is being built
     std::string new_seed_buffer;
 
     for (int j = 0; j < (int)seed.length(); j++) {   // For each character in the seed...
-      for (int i = 0; i < (int)rules.size(); i++) {  // ...and each rule in the collection.
+      for (int i = 0; i < (int)rules.size(); i++) {  // ...and each rule in the collection
         if (seed.at(j) == rules.at(i).variable) {    // If the character matches one of our rule variables...
-          new_seed_buffer.append(rules.at(i).replacement_symbols);  // ...add the evolution symbols to the new seed.
+          new_seed_buffer.append(rules.at(i).replacement_symbols);  // ...add the evolution symbols to the new seed
           break;
         }
       }
     }
 
-    seed = new_seed_buffer;  // Update seed to the new seed.
-    printf(seed.data());  // Debug
+    seed = new_seed_buffer;  // Update seed to the new seed
+    printf(seed.data());  // DEBUG
   }
 
 public:
@@ -58,8 +59,8 @@ public:
 
   }
 
-  void process_recipe() {
-    // TODO Get user input of / read from file the variables.
+  void define_recipe() {
+    // TODO Get user input of / read from file the variables
     axiom_ = "AB";
     order_ = 5;
     axiom_length_ = 20;
@@ -70,7 +71,7 @@ public:
     randomise_angle_ = 0;
     gravity_ = 1.8f;
 
-    // TODO Get user input of / read from file the rules.
+    // TODO Get user input of / read from file the rules
     rules_ = { 
       // Variables
       { 'A', "ABA" },
@@ -83,16 +84,19 @@ public:
       { ']' , "]", LOAD_POSITION },
     };
 
-    // Set the starting seed.
+    // Set the starting seed
     seed_ = axiom_;
 
     // Generate the instruction set for building the tree
     process_rules(rules_, seed_);
   }
 
+  // Return the resultant seed for drawing the tree from a certain number of iterations on top of current seed (steps)
   std::string GetSeed(int number_of_steps) {
     if (!number_of_steps > order_) {
-
+      for (int i = 0; i < number_of_steps; i++) {
+        process_rules(rules_, seed_);
+      }
     }
     return seed_;
   }

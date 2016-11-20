@@ -20,6 +20,7 @@
 #include <vector>
 
 #include "recipe.h"
+#include "branch.h"
 #include "tree.h"
 #include "l_system_app.h"
 

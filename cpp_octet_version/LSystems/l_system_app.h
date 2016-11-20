@@ -17,30 +17,30 @@ namespace octet {
     // For now just work with a single tree
     Tree tree;
 
-    void DrawStuff() {
-      // vertex shader copies pos to glPosition
-      const char *vs = "attribute vec2 pos; void main() { gl_Position = vec4(pos, 0, 1); }";
-      GLuint vertex_shader = glCreateShader(GL_VERTEX_SHADER);
-      glShaderSource(vertex_shader, 1, &vs, nullptr);
-      glCompileShader(vertex_shader);
+    //void DrawStuff() {
+    //  // vertex shader copies pos to glPosition
+    //  const char *vs = "attribute vec2 pos; void main() { gl_Position = vec4(pos, 0, 1); }";
+    //  GLuint vertex_shader = glCreateShader(GL_VERTEX_SHADER);
+    //  glShaderSource(vertex_shader, 1, &vs, nullptr);
+    //  glCompileShader(vertex_shader);
 
-      // fragment shader draws in white
-      const char *fs = "void main() { gl_FragColor = vec4(1, 1, 1, 1); }";
-      GLuint fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
-      glShaderSource(fragment_shader, 1, &fs, nullptr);
-      glCompileShader(fragment_shader);
+    //  // fragment shader draws in white
+    //  const char *fs = "void main() { gl_FragColor = vec4(1, 1, 1, 1); }";
+    //  GLuint fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
+    //  glShaderSource(fragment_shader, 1, &fs, nullptr);
+    //  glCompileShader(fragment_shader);
 
-      // combine fragment and vertex shader
-      GLuint program = glCreateProgram();
-      glAttachShader(program, vertex_shader);
-      glAttachShader(program, fragment_shader);
-      glLinkProgram(program);
-      glUseProgram(program);
+    //  // combine fragment and vertex shader
+    //  GLuint program = glCreateProgram();
+    //  glAttachShader(program, vertex_shader);
+    //  glAttachShader(program, fragment_shader);
+    //  glLinkProgram(program);
+    //  glUseProgram(program);
 
-      glutReshapeFunc(Tree::reshape);
-      glutDisplayFunc(Tree::display);
-      glutMainLoop();
-    }
+    //  glutReshapeFunc(Tree::reshape);
+    //  glutDisplayFunc(Tree::display);
+    //  glutMainLoop();
+    //}
 
     // draw_text function from Octet example Invaiderers
     void draw_text(texture_shader &shader, float x, float y, float scale, const char *text) {
@@ -93,20 +93,11 @@ namespace octet {
       font_texture = resource_dict::get_texture_handle(GL_RGBA, "assets/big_0.gif");
     }
 
-
-    void Init() {
-      // set up the matrices with a camera 5 units from the origin
-      camera_to_world.loadIdentity();
-      camera_to_world.translate(0, 0, 5);
-
-      font_texture = resource_dict::get_texture_handle(GL_RGBA, "assets/big_0.gif");
-    }
-
     void MainLoop() {
       if (is_key_down(key_enter)) {
         // TODO Hide input controlls 
         // Run algorithm to create tree string.
-        tree.GetRecipe().process_recipe();
+        tree.GetRecipe().define_recipe();
       }
 
       // Create the vertex map for the tree.
@@ -131,6 +122,8 @@ namespace octet {
       glEnable(GL_BLEND);
       glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
+      //DrawStuff();
+
       char some_text[32];
       sprintf(some_text, "This is text drawn");
       draw_text(texture_shader_, -1.75f, 2, 1.0f / 256, some_text);
@@ -138,8 +131,6 @@ namespace octet {
       // move the listener with the camera
       vec4 &cpos = camera_to_world.w();
       alListener3f(AL_POSITION, cpos.x(), cpos.y(), cpos.z());
-
-      DrawStuff();
     }
 
   };
