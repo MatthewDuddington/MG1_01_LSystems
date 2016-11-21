@@ -2,18 +2,6 @@
 
 class Recipe {
 
-  // Possible drawing actions
-  // Define here to avoid circular dependency with recipe
-public: enum Action {
-    NONE,           // Empty action used for seed rules
-    DRAW_FORWARD,
-    ROTATE_LEFT,
-    ROTATE_RIGHT,
-    SAVE_POSITION,
-    LOAD_POSITION
-  };
-
-private:
   std::string axiom_;       // Starting seed
   int order_;               // Number of iterations
   float axiom_length_;      // Starting branch size
@@ -29,7 +17,6 @@ private:
   {
     char variable;
     std::string replacement_symbols;
-    Action action = NONE;  // Only set to a different value if used for drawing process
   };
 
   std::vector<Rule> rules_;
@@ -75,13 +62,13 @@ public:
     rules_ = { 
       // Variables
       { 'A', "ABA" },
-      { 'B', "AA" }
+      { 'B', "AA" },
       // Constants
-      { 'F' , "F", DRAW_FORWARD },
-      { '-' , "-", ROTATE_LEFT },
-      { '+' , "+", ROTATE_RIGHT },
-      { '[' , "[", SAVE_POSITION },
-      { ']' , "]", LOAD_POSITION },
+      { 'F' , "F" },
+      { '-' , "-" },
+      { '+' , "+" },
+      { '[' , "[" },
+      { ']' , "]" },
     };
 
     // Set the starting seed

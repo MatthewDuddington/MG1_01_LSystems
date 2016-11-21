@@ -13,8 +13,7 @@ namespace octet {
       mat4t turtle_to_world;
     };
 
-    float axiom_node_pos_x = 0;
-    float axiom_node_pos_y = 0;
+    vec3 axiom_node_ = (0, 0, 0);
 
     std::vector<Branch> branches_;
 
@@ -58,7 +57,40 @@ namespace octet {
     }
     
     void prepare_tree(int number_of_steps = 1) {
+      // Get a reference to the recipe 
       std::string& recipe = recipe_.GetSeed(number_of_steps);
+
+      // Setup 'turtle' at start
+      Turtle turtle;
+      turtle.turtle_to_world.translate(axiom_node_.x, axiom_node_.y, axiom_node_.z);
+
+      // Reset branches and set axiom trunk
+      branches_.clear();
+      branches_.at(0).Init(axiom_node_.x, axiom_node_.y, recipe_.shape_half_width, recipe_.shape_half_height);
+      Branch* previous_branch = &branches_.at(0);
+
+      // Loop through recipe and apply rules to 'turtle'
+      for (int i = 0; i < recipe.size(); i++) {
+        switch (recipe.at(i))
+        {
+        case 'F':  // Draw forwards
+          branches_.at(i).Init(turtle.turtle_to_world[3][0], turtle.turtle_to_world[3][1], previous_branch->Size().x, previous_branch->Size().y);
+          break;
+        case '-':  // Turn left
+
+          break;
+        case '+':  // Turn right
+
+          break;
+        case '[':  // Save position
+
+          break;
+        case ']':  // Load position
+
+          break;
+        }
+      }
+
       // read recipe string and setup branches to be drawn
     }
 

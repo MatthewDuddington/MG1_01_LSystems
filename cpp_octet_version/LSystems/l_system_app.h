@@ -88,7 +88,7 @@ namespace octet {
 
       // set up the matrices with a camera 5 units from the origin
       camera_to_world.loadIdentity();
-      camera_to_world.translate(0, 0, 5);
+      camera_to_world.translate(0, 2.3f, 5);
 
       font_texture = resource_dict::get_texture_handle(GL_RGBA, "assets/big_0.gif");
     }

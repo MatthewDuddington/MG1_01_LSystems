@@ -45,7 +45,7 @@ int main(int argc, char **argv)
 
     // our application.
     octet::LSystemApp app(argc, argv);
-    app.Init();
+    app.init();
 
     // open windows
     octet::app::run_all_apps();
