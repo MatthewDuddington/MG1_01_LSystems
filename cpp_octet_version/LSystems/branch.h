@@ -24,8 +24,8 @@ namespace octet {
 
     void Init(float node_pos_x, float node_pos_y, float branch_half_width, float branch_half_height) {
       vertices_ = {
-        (node_pos_x + branch_half_width), (node_pos_y),                            0,  // Lower right
         (node_pos_x - branch_half_width), (node_pos_y),                            0,  // Lower left
+        (node_pos_x + branch_half_width), (node_pos_y),                            0,  // Lower right
         (node_pos_x + branch_half_width), (node_pos_y + (2 * branch_half_height)), 0,  // Upper right
         (node_pos_x - branch_half_width), (node_pos_y + (2 * branch_half_height)), 0   // Upper left
       };
