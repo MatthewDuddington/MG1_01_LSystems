@@ -1,3 +1,10 @@
+////////////////////////////////////////////////////////////////////////////////
+//
+//  (c) Matthew Duddington 2016
+//
+//  Using Octet framework (c) Andy Thomason 2012 - 2014
+//
+
 #pragma once
 
 namespace octet {
@@ -27,46 +34,28 @@ namespace octet {
     };
     */
 
-    /*
-    static std::vector<float>& vertices_() {
-      static std::vector<float> vertices;
-      if (vertices.size() == 0) {
-        vertices.push_back(0);
-      }
-      return vertices;
-    }
-
-    void add_new_vertices(float node_pos_x, float node_pos_y, float shape_half_height, float shape_half_width) {
-      // Set up verts as per a quad made of a triangle strip.
-      float new_vertices[8] = {
-        (node_pos_x + shape_half_width), node_pos_y, // Lower right
-        (node_pos_x - shape_half_width), node_pos_y, // Lower left
-        (node_pos_x + shape_half_width), (node_pos_y + (2 * shape_half_height)), // Upper right
-        (node_pos_x - shape_half_width), (node_pos_y + (2 * shape_half_height)) // Upper left
-      };
-
-      for (int i = 0; i < sizeof(new_vertices); i++) {
-        vertices_().push_back(new_vertices[i]);
-      }
-    }
-    */
 
   public:
     Recipe& GetRecipe() {
       return recipe_;
     }
+
+    std::vector<Branch>& GetBranches() {
+      return branches_;
+    }
     
-    void prepare_tree(int number_of_steps = 1) {
+    void PrepareTree(int number_of_steps = 1) {
       // Get a reference to the recipe 
       std::string& recipe = recipe_.GetSeed(number_of_steps);
 
       // Setup 'turtle' at start
       Turtle turtle;
-      turtle.turtle_to_world.translate(axiom_node_.x, axiom_node_.y, axiom_node_.z);
+      turtle.turtle_to_world.translate(axiom_node_.x(), axiom_node_.y(), axiom_node_.z());
 
       // Reset branches and set axiom trunk
       branches_.clear();
-      branches_.at(0).Init(axiom_node_.x, axiom_node_.y, recipe_.shape_half_width, recipe_.shape_half_height);
+      branches_.push_back(Branch());
+      branches_.at(0).Init(axiom_node_.x(), axiom_node_.y(), recipe_.AxiomHalfWidth(), recipe_.AxiomHalfHeight());
       Branch* previous_branch = &branches_.at(0);
 
       // Loop through recipe and apply rules to 'turtle'
@@ -74,7 +63,7 @@ namespace octet {
         switch (recipe.at(i))
         {
         case 'F':  // Draw forwards
-          branches_.at(i).Init(turtle.turtle_to_world[3][0], turtle.turtle_to_world[3][1], previous_branch->Size().x, previous_branch->Size().y);
+          branches_.at(i).Init(turtle.turtle_to_world[3][0], turtle.turtle_to_world[3][1], previous_branch->Size().x(), previous_branch->Size().y());
           break;
         case '-':  // Turn left
 

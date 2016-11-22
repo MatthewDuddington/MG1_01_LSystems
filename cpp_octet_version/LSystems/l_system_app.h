@@ -1,3 +1,13 @@
+////////////////////////////////////////////////////////////////////////////////
+//
+//  (c) Matthew Duddington 2016
+//
+//  Using Octet framework (c) Andy Thomason 2012 - 2014
+//
+//  Using some code with modifications from:
+//  Octet Invaiderers example (c) Andy Thomason 2012 - 2014
+//
+
 #pragma once
 
 namespace octet {
@@ -6,16 +16,19 @@ namespace octet {
 
     // Matrix to transform points in our camera space to the world.
     // This lets us move our camera
-    mat4t camera_to_world;
+    mat4t camera_to_world_;
     // shader to draw a textured triangle
     texture_shader texture_shader_;
     // Texture for our text
-    GLuint font_texture;
+    GLuint font_texture_;
     // Information for our text
-    bitmap_font font;
+    bitmap_font font_;
+
+    // Colour shader for branches etc.
+    color_shader colour_shader_;
 
     // For now just work with a single tree
-    Tree tree;
+    Tree tree_;
 
     //void DrawStuff() {
     //  // vertex shader copies pos to glPosition
@@ -42,13 +55,13 @@ namespace octet {
     //  glutMainLoop();
     //}
 
-    // draw_text function from Octet example Invaiderers
+    // Function from Octet Invaiderers example
     void draw_text(texture_shader &shader, float x, float y, float scale, const char *text) {
       mat4t modelToWorld;
       modelToWorld.loadIdentity();
       modelToWorld.translate(x, y, 0);
       modelToWorld.scale(scale, scale, 1);
-      mat4t modelToProjection = mat4t::build_projection_matrix(modelToWorld, camera_to_world);
+      mat4t modelToProjection = mat4t::build_projection_matrix(modelToWorld, camera_to_world_);
 
       /*mat4t tmp;
       glLoadIdentity();
@@ -62,11 +75,11 @@ namespace octet {
       uint32_t indices[max_quads * 6];
       aabb bb(vec3(0, 0, 0), vec3(256, 256, 0));
 
-      unsigned num_quads = font.build_mesh(bb, vertices, indices, max_quads, text, 0);
+      unsigned num_quads = font_.build_mesh(bb, vertices, indices, max_quads, text, 0);
       glActiveTexture(GL_TEXTURE0);
-      glBindTexture(GL_TEXTURE_2D, font_texture);
+      glBindTexture(GL_TEXTURE_2D, font_texture_);
 
-      shader.render(modelToProjection, 0, vec4(1,1,1,1));
+      shader.render(modelToProjection, 0);
 
       glVertexAttribPointer(attribute_pos, 3, GL_FLOAT, GL_FALSE, sizeof(bitmap_font::vertex), (void*)&vertices[0].x);
       glEnableVertexAttribArray(attribute_pos);
@@ -76,35 +89,49 @@ namespace octet {
       glDrawElements(GL_TRIANGLES, num_quads * 6, GL_UNSIGNED_INT, indices);
     }
 
-  public:
+    void DrawBranches() {
+      std::vector<Branch>& branches = tree_.GetBranches();
+      for (int i = 0; i < branches.size(); i++) {
+        branches.at(i).Render(colour_shader_, camera_to_world_);
+      }
+    }
 
+
+  public:
     // this is called when we construct the class
-    LSystemApp(int argc, char **argv) : app(argc, argv), font(512, 256, "assets/big.fnt") {}
+    LSystemApp(int argc, char **argv) : app(argc, argv), font_(512, 256, "assets/big.fnt") {}
 
     // this is called once OpenGL is initialized
     void app_init() {
-      // set up the shader
+      // Set up the shaders
       texture_shader_.init();
+      colour_shader_.init();
 
       // set up the matrices with a camera 5 units from the origin
-      camera_to_world.loadIdentity();
-      camera_to_world.translate(0, 2.3f, 5);
+      camera_to_world_.loadIdentity();
+      camera_to_world_.translate(0, 2.3f, 5);
 
-      font_texture = resource_dict::get_texture_handle(GL_RGBA, "assets/big_0.gif");
+      font_texture_ = resource_dict::get_texture_handle(GL_RGBA, "assets/big_0.gif");
     }
 
     void MainLoop() {
+      bool update_tree = true;  // DEBUG testing is true, Set back to false!
+
       if (is_key_down(key_enter)) {
         // TODO Hide input controlls 
         // Run algorithm to create tree string.
-        tree.GetRecipe().define_recipe();
+        tree_.GetRecipe().define_recipe();
+        update_tree = true;
       }
 
-      // Create the vertex map for the tree.
-      tree.prepare_tree();
+      if (update_tree) {
+        // Create the vertex map for the tree.
+        tree_.PrepareTree();
+      }
     }
 
-    // Octet calls this
+    // Function adapted from Octet Invaiderers example
+    // Octet calls this (do not refactor name)
     void draw_world(int x, int y, int w, int h) {
       MainLoop();
 
@@ -122,14 +149,14 @@ namespace octet {
       glEnable(GL_BLEND);
       glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-      //DrawStuff();
+      DrawBranches();
 
       char some_text[32];
       sprintf(some_text, "This is text drawn");
       draw_text(texture_shader_, -1.75f, 2, 1.0f / 256, some_text);
 
       // move the listener with the camera
-      vec4 &cpos = camera_to_world.w();
+      vec4 &cpos = camera_to_world_.w();
       alListener3f(AL_POSITION, cpos.x(), cpos.y(), cpos.z());
     }
 

@@ -1,3 +1,8 @@
+////////////////////////////////////////////////////////////////////////////////
+//
+//  (c) Matthew Duddington 2016
+//
+
 #pragma once
 
 class Recipe {
@@ -12,26 +17,25 @@ class Recipe {
   float randomise_angle_;   // Amount to vary branch roatation
   float gravity_;           // Proportion to droop based on distance from trunk
 
-  // Struct to contain rules of both seed generation and drawing process
+  // Struct to represent rules 
   struct Rule
   {
     char variable;
     std::string replacement_symbols;
   };
 
-  std::vector<Rule> rules_;
+  std::vector<Rule> rules_;  // Collection of rules for seed generation and drawing processes
 
-  std::string seed_;
+  std::string seed_ = "";  // The string of variables and constants that define the tree at each step
 
   void process_rules(std::vector<Rule> rules, std::string &seed) {
-    // Store new seed here as it is being built
-    std::string new_seed_buffer;
+    std::string new_seed_buffer;  // Store new seed here as it is being built
 
     for (int j = 0; j < (int)seed.length(); j++) {   // For each character in the seed...
       for (int i = 0; i < (int)rules.size(); i++) {  // ...and each rule in the collection
         if (seed.at(j) == rules.at(i).variable) {    // If the character matches one of our rule variables...
           new_seed_buffer.append(rules.at(i).replacement_symbols);  // ...add the evolution symbols to the new seed
-          break;
+          break;  // Once rule is identified, skip to the next character
         }
       }
     }
@@ -40,12 +44,8 @@ class Recipe {
     printf(seed.data());  // DEBUG
   }
 
+
 public:
-  // Constructor
-  Recipe() {
-
-  }
-
   void define_recipe() {
     // TODO Get user input of / read from file the variables
     axiom_ = "AB";
@@ -71,14 +71,13 @@ public:
       { ']' , "]" },
     };
 
-    // Set the starting seed
-    seed_ = axiom_;
+    seed_ = axiom_;  // Set the starting seed
 
-    // Generate the instruction set for building the tree
-    process_rules(rules_, seed_);
+    process_rules(rules_, seed_);  // Generate the instruction set for building the tree
   }
 
-  // Return the resultant seed for drawing the tree from a certain number of iterations on top of current seed (steps)
+  // Return the resultant seed for drawing the tree,
+  // after a certain number of iterations are processed on the current seed
   std::string GetSeed(int number_of_steps) {
     if (!number_of_steps > order_) {
       for (int i = 0; i < number_of_steps; i++) {
@@ -88,12 +87,14 @@ public:
     return seed_;
   }
 
-  float shape_half_height() {
-    return axiom_length_ * 0.5f;
+  float AxiomHalfHeight() {
+    return 3.0f;
+    //return axiom_length_ * 0.5f;
   }
 
-  float shape_half_width() {
-    return axiom_width_ * 0.5f;
+  float AxiomHalfWidth() {
+    return 0.5f;
+    //return axiom_width_ * 0.5f;
   }
 };
 

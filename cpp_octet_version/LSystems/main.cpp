@@ -1,5 +1,12 @@
-// Using Octet library (c) Andy Thomason 
-// Using framework code from drawing a single red triangle in open GL example at: https://github.com/andy-thomason/gles2-triangle
+////////////////////////////////////////////////////////////////////////////////
+//
+//  (c) Matthew Duddington 2016
+//
+//  Using Octet framework (c) Andy Thomason 2012 - 2014
+//
+//  Using some code with modifications from:
+//  Octet Invaiderers example (c) Andy Thomason 2012 - 2014
+//
 
 //#ifdef WIN32
 //// This is the "GL extension wrangler"
