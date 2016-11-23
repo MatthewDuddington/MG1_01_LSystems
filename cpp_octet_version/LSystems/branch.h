@@ -14,8 +14,12 @@ namespace octet {
 
   class Branch {
 
-    vec4 root_colour_ = { 1, 0.7f, 1, 1 };
-    vec4 tip_colour_ = { 0.7f, 1, 0, 1 };
+    int depth_from_trunk;
+
+    vec2 half_size_ = (1, 1);
+
+    vec4 root_colour_ = { 0.66f, 0.63f, 0.51f, 1 };
+    vec4 tip_colour_ = { 0.7f, 0.67f, 0.59f, 1 };
 
   public:
     mat4t model_to_world_;
@@ -23,6 +27,10 @@ namespace octet {
     std::array<float, 12> vertices_;
 
     void Init(float node_pos_x, float node_pos_y, float branch_half_width, float branch_half_height) {
+      model_to_world_.loadIdentity();
+
+      half_size_ = (branch_half_width, branch_half_height);
+
       vertices_ = {
         (node_pos_x - branch_half_width), (node_pos_y),                            0,  // Lower left
         (node_pos_x + branch_half_width), (node_pos_y),                            0,  // Lower right
@@ -31,8 +39,8 @@ namespace octet {
       };
     }
 
-    vec2& Size() {
-      return vec2(1, 1);
+    const vec2& HalfSize() {
+      return half_size_;
     }
 
     // Function from Octet Invaiderers example

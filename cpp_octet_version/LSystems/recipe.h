@@ -17,6 +17,8 @@ class Recipe {
   float randomise_angle_;   // Amount to vary branch roatation
   float gravity_;           // Proportion to droop based on distance from trunk
 
+  int steps_processed_ = 0;  // Keeps track of how many iterations have been carried out on the seed (should not go above order_)
+
   // Struct to represent rules 
   struct Rule
   {
@@ -28,7 +30,7 @@ class Recipe {
 
   std::string seed_ = "";  // The string of variables and constants that define the tree at each step
 
-  void process_rules(std::vector<Rule> rules, std::string &seed) {
+  void ProcessRules(std::vector<Rule> rules, std::string &seed) {
     std::string new_seed_buffer;  // Store new seed here as it is being built
 
     for (int j = 0; j < (int)seed.length(); j++) {   // For each character in the seed...
@@ -41,30 +43,29 @@ class Recipe {
     }
 
     seed = new_seed_buffer;  // Update seed to the new seed
-    printf(seed.data());  // DEBUG
+    //printf(seed.data());  // DEBUG
+    printf("ProcessRules\n");
   }
 
 
 public:
-  void define_recipe() {
+  void DefineRecipe() {
     // TODO Get user input of / read from file the variables
-    axiom_ = "AB";
+    axiom_ = "F";
     order_ = 5;
-    axiom_length_ = 20;
+    axiom_width_ = 1;
+    axiom_length_ = 5;
     randomise_length_ = 0;
-    axiom_width_ = 6;
-    angle_Left_ = 27.5f;
-    angle_right_ = 27.5f;
+    angle_Left_ = 25.7f;
+    angle_right_ = 25.7f;
     randomise_angle_ = 0;
-    gravity_ = 1.8f;
+    gravity_ = 1.0f;
 
     // TODO Get user input of / read from file the rules
-    rules_ = { 
+    rules_ = {
       // Variables
-      { 'A', "ABA" },
-      { 'B', "AA" },
+      { 'F', "F[+F]F[-F]F" },
       // Constants
-      { 'F' , "F" },
       { '-' , "-" },
       { '+' , "+" },
       { '[' , "[" },
@@ -72,29 +73,40 @@ public:
     };
 
     seed_ = axiom_;  // Set the starting seed
-
-    process_rules(rules_, seed_);  // Generate the instruction set for building the tree
+    printf("DefineRecipe\n");
   }
 
   // Return the resultant seed for drawing the tree,
   // after a certain number of iterations are processed on the current seed
   std::string GetSeed(int number_of_steps) {
-    if (!number_of_steps > order_) {
-      for (int i = 0; i < number_of_steps; i++) {
-        process_rules(rules_, seed_);
-      }
+    if (steps_processed_ == order_) { 
+      printf("Max number of iterations reached, as specified by the recipe Order"); 
+      return seed_;
+    }
+    else if ((number_of_steps + steps_processed_) > order_) {
+      printf("Number of steps requested is greater than the recipe Order. Processing max order of tree.");
+      number_of_steps = order_;
+    }
+    for (int i = 0; i < number_of_steps; i++) {
+      ProcessRules(rules_, seed_);  // Generate the instruction set for building the tree
     }
     return seed_;
   }
 
-  float AxiomHalfHeight() {
-    return 3.0f;
-    //return axiom_length_ * 0.5f;
+  const float AxiomHalfHeight() {
+    return axiom_length_ * 0.5f;
   }
 
-  float AxiomHalfWidth() {
-    return 0.5f;
-    //return axiom_width_ * 0.5f;
+  const float AxiomHalfWidth() {
+    return axiom_width_ * 0.5f;
+  }
+
+  const float& LeftRotation() {
+    return angle_Left_;
+  }
+
+  const float& RightRotation() {
+    return -angle_right_;
   }
 };
 

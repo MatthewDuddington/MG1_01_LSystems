@@ -15,24 +15,14 @@ namespace octet {
 
     // Conceptual 'turtle' for when processing recipe
     struct Turtle {
-      vec3 position;
-      float rotation;
+      //float rotation;
       mat4t turtle_to_world;
+      std::vector<mat4t> position_stack;
     };
 
     vec3 axiom_node_ = (0, 0, 0);
 
     std::vector<Branch> branches_;
-
-    /*
-    struct Branch {
-      vec3 position;
-      float roatation;
-      mat4t model_to_world;  // Matrix for holding position and rotation of node
-      vec4 colour_tip;   // Colour for gradient at edge nearest tip of branch
-      vec4 colour_root;  // Colour for gradient at edge neaerest root of branch
-    };
-    */
 
 
   public:
@@ -57,53 +47,38 @@ namespace octet {
       branches_.push_back(Branch());
       branches_.at(0).Init(axiom_node_.x(), axiom_node_.y(), recipe_.AxiomHalfWidth(), recipe_.AxiomHalfHeight());
       Branch* previous_branch = &branches_.at(0);
-
+       
       // Loop through recipe and apply rules to 'turtle'
       for (int i = 0; i < recipe.size(); i++) {
+        vec2 new_half_size = (previous_branch->HalfSize().x(), previous_branch->HalfSize().y());
         switch (recipe.at(i))
         {
         case 'F':  // Draw forwards
-          branches_.at(i).Init(turtle.turtle_to_world[3][0], turtle.turtle_to_world[3][1], previous_branch->Size().x(), previous_branch->Size().y());
+          turtle.turtle_to_world.translate(0, new_half_size.y(), 0);  // TODO Does this move in World or Model space?
+          branches_.push_back(Branch());
+          branches_.at(branches_.size() - 1).Init(turtle.turtle_to_world[3][0], turtle.turtle_to_world[3][1], 1, 3);
           break;
         case '-':  // Turn left
-
+          turtle.turtle_to_world.rotateZ(recipe_.LeftRotation());
+          //turtle.rotation += recipe_.LeftRotation();
           break;
         case '+':  // Turn right
-
+          turtle.turtle_to_world.rotateZ(recipe_.RightRotation());
+          //turtle.rotation += recipe_.RightRotation();
           break;
         case '[':  // Save position
-
+          turtle.position_stack.push_back(turtle.turtle_to_world);
+          //mat4t& turtle_matrix = turtle.turtle_to_world;
+          //turtle.position_stack.push_back(vec4(turtle_matrix[3][0], turtle_matrix[3][1], turtle_matrix[3][2], turtle.rotation));
           break;
         case ']':  // Load position
-
+          turtle.turtle_to_world = turtle.position_stack.at(turtle.position_stack.size() - 1);
+          turtle.position_stack.pop_back();
           break;
         }
       }
-
-      // read recipe string and setup branches to be drawn
     }
 
-    //static void display()
-    //{
-    //  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-    //  // set the attributes (assume pos=0)
-    //  glVertexAttribPointer(
-    //    0, 2, GL_FLOAT, GL_FALSE,
-    //    2 * sizeof(float), (GLvoid*)vertices_().data()
-    //  );
-    //  glEnableVertexAttribArray(0);
-
-    //  // draw the triangle
-    //  glDrawArrays(GL_TRIANGLE_STRIP, 0, 3);
-
-    //  glutSwapBuffers();
-    //}
-
-    //static void reshape(int w, int h)
-    //{
-    //  glViewport(0, 0, w, h);
-    //}
   };
 
 }

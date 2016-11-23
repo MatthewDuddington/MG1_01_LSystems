@@ -30,6 +30,13 @@ namespace octet {
     // For now just work with a single tree
     Tree tree_;
 
+    int fps = 30;
+    int key_press_time = 1 * fps;
+    int key_press_timer_;
+
+    float camera_distance_ = 10;
+    float camera_increment = 5;
+
     //void DrawStuff() {
     //  // vertex shader copies pos to glPosition
     //  const char *vs = "attribute vec2 pos; void main() { gl_Position = vec4(pos, 0, 1); }";
@@ -99,7 +106,7 @@ namespace octet {
 
   public:
     // this is called when we construct the class
-    LSystemApp(int argc, char **argv) : app(argc, argv), font_(512, 256, "assets/big.fnt") {}
+    LSystemApp(int argc, char **argv) : app(argc, argv) {} // , font_(512, 256, "assets/big.fnt") {}
 
     // this is called once OpenGL is initialized
     void app_init() {
@@ -109,25 +116,30 @@ namespace octet {
 
       // set up the matrices with a camera 5 units from the origin
       camera_to_world_.loadIdentity();
-      camera_to_world_.translate(0, 2.3f, 5);
+      camera_to_world_.translate(0, camera_distance_, camera_distance_);
 
-      font_texture_ = resource_dict::get_texture_handle(GL_RGBA, "assets/big_0.gif");
+      // font_texture_ = resource_dict::get_texture_handle(GL_RGBA, "assets/big_0.gif");
     }
 
     void MainLoop() {
-      bool update_tree = true;  // DEBUG testing is true, Set back to false!
-
-      if (is_key_down(key_enter)) {
-        // TODO Hide input controlls 
-        // Run algorithm to create tree string.
-        tree_.GetRecipe().define_recipe();
-        update_tree = true;
+      if (key_press_timer_-- > 0) {}
+      else {
+        if (is_key_down(key_enter)) {
+          // TODO Hide input controlls 
+          // Run algorithm to create tree string.
+          tree_.GetRecipe().DefineRecipe();
+          key_press_timer_ = key_press_time;
+        }
+        else if (is_key_down(key_space)) {
+          tree_.PrepareTree();
+          UpdateCamera();
+          key_press_timer_ = key_press_time;
+        }
       }
+    }
 
-      if (update_tree) {
-        // Create the vertex map for the tree.
-        tree_.PrepareTree();
-      }
+    void UpdateCamera() {
+      camera_to_world_.translate(0, camera_increment, camera_increment);
     }
 
     // Function adapted from Octet Invaiderers example
@@ -151,9 +163,11 @@ namespace octet {
 
       DrawBranches();
 
+      /*
       char some_text[32];
       sprintf(some_text, "This is text drawn");
       draw_text(texture_shader_, -1.75f, 2, 1.0f / 256, some_text);
+      */
 
       // move the listener with the camera
       vec4 &cpos = camera_to_world_.w();
