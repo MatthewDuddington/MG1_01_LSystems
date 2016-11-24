@@ -26,17 +26,27 @@ namespace octet {
 
     std::array<float, 12> vertices_;
 
-    void Init(float node_pos_x, float node_pos_y, float branch_half_width, float branch_half_height) {
-      model_to_world_.loadIdentity();
+    // Loads a new branch into the tree branches array,
+    // initialises the new branche's size and vertex positions,
+    // returns a reference to the new branch.
+    static Branch& NewBranch(std::vector<Branch>& branches, const vec2& parent_half_size, const float& thinning_ratio) {
+      // Add a new branch to the branches vector
+      branches.push_back(Branch());
+      Branch& new_branch = branches.at(branches.size() - 1);
+      
+      new_branch.model_to_world_.loadIdentity();  // Reset its transforms
+      new_branch.half_size_ = vec2(parent_half_size.x() * thinning_ratio, parent_half_size.y() * thinning_ratio);  // Adapt the size
 
-      half_size_ = (branch_half_width, branch_half_height);
-
-      vertices_ = {
-        (node_pos_x - branch_half_width), (node_pos_y),                            0,  // Lower left
-        (node_pos_x + branch_half_width), (node_pos_y),                            0,  // Lower right
-        (node_pos_x + branch_half_width), (node_pos_y + (2 * branch_half_height)), 0,  // Upper right
-        (node_pos_x - branch_half_width), (node_pos_y + (2 * branch_half_height)), 0   // Upper left
+      // Setup the vertex positions
+      new_branch.vertices_ = {
+        - parent_half_size.x()     , 0                            , 0,  // Lower left
+          parent_half_size.x()     , 0                            , 0,  // Lower right
+          new_branch.half_size_.x(), new_branch.half_size_.y() * 2, 0,  // Upper right
+        - new_branch.half_size_.x(), new_branch.half_size_.y() * 2, 0   // Upper left
       };
+
+      printf("Parent: %f, %f    New: %f, %f\n", parent_half_size.x(), parent_half_size.y(), new_branch.half_size_.x(), new_branch.half_size_.y());
+      return new_branch;
     }
 
     const vec2& HalfSize() {

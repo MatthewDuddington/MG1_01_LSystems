@@ -34,33 +34,8 @@ namespace octet {
     int key_press_time = 1 * fps;
     int key_press_timer_;
 
-    float camera_distance_ = 10;
+    float camera_distance_ = 25;
     float camera_increment = 5;
-
-    //void DrawStuff() {
-    //  // vertex shader copies pos to glPosition
-    //  const char *vs = "attribute vec2 pos; void main() { gl_Position = vec4(pos, 0, 1); }";
-    //  GLuint vertex_shader = glCreateShader(GL_VERTEX_SHADER);
-    //  glShaderSource(vertex_shader, 1, &vs, nullptr);
-    //  glCompileShader(vertex_shader);
-
-    //  // fragment shader draws in white
-    //  const char *fs = "void main() { gl_FragColor = vec4(1, 1, 1, 1); }";
-    //  GLuint fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
-    //  glShaderSource(fragment_shader, 1, &fs, nullptr);
-    //  glCompileShader(fragment_shader);
-
-    //  // combine fragment and vertex shader
-    //  GLuint program = glCreateProgram();
-    //  glAttachShader(program, vertex_shader);
-    //  glAttachShader(program, fragment_shader);
-    //  glLinkProgram(program);
-    //  glUseProgram(program);
-
-    //  glutReshapeFunc(Tree::reshape);
-    //  glutDisplayFunc(Tree::display);
-    //  glutMainLoop();
-    //}
 
     // Function from Octet Invaiderers example
     void draw_text(texture_shader &shader, float x, float y, float scale, const char *text) {
@@ -69,13 +44,6 @@ namespace octet {
       modelToWorld.translate(x, y, 0);
       modelToWorld.scale(scale, scale, 1);
       mat4t modelToProjection = mat4t::build_projection_matrix(modelToWorld, camera_to_world_);
-
-      /*mat4t tmp;
-      glLoadIdentity();
-      glTranslatef(x, y, 0);
-      glGetFloatv(GL_MODELVIEW_MATRIX, (float*)&tmp);
-      glScalef(scale, scale, 1);
-      glGetFloatv(GL_MODELVIEW_MATRIX, (float*)&tmp);*/
 
       enum { max_quads = 32 };
       bitmap_font::vertex vertices[max_quads * 4];
@@ -106,7 +74,7 @@ namespace octet {
 
   public:
     // this is called when we construct the class
-    LSystemApp(int argc, char **argv) : app(argc, argv) {} // , font_(512, 256, "assets/big.fnt") {}
+    LSystemApp(int argc, char **argv) : app(argc, argv), font_(512, 256, "assets/big.fnt") {}
 
     // this is called once OpenGL is initialized
     void app_init() {
@@ -118,7 +86,7 @@ namespace octet {
       camera_to_world_.loadIdentity();
       camera_to_world_.translate(0, camera_distance_, camera_distance_);
 
-      // font_texture_ = resource_dict::get_texture_handle(GL_RGBA, "assets/big_0.gif");
+      font_texture_ = resource_dict::get_texture_handle(GL_RGBA, "assets/big_0.gif");
     }
 
     void MainLoop() {
@@ -163,11 +131,9 @@ namespace octet {
 
       DrawBranches();
 
-      /*
       char some_text[32];
       sprintf(some_text, "This is text drawn");
       draw_text(texture_shader_, -1.75f, 2, 1.0f / 256, some_text);
-      */
 
       // move the listener with the camera
       vec4 &cpos = camera_to_world_.w();
