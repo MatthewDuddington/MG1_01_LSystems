@@ -21,11 +21,15 @@ namespace octet {
     vec4 root_colour_ = { 0.66f, 0.63f, 0.51f, 1 };
     vec4 tip_colour_ = { 0.7f, 0.67f, 0.59f, 1 };
 
+
   public:
+    
     mat4t model_to_world_;
 
     std::array<float, 12> vertices_;
 
+    static bool& IsAfterSplit() { static bool is_after_split; return is_after_split; }
+    
     // Loads a new branch into the tree branches array,
     // initialises the new branche's size and vertex positions,
     // returns a reference to the new branch.
@@ -45,7 +49,7 @@ namespace octet {
         - new_branch.half_size_.x(), new_branch.half_size_.y() * 2, 0   // Upper left
       };
 
-      printf("Parent: %f, %f    New: %f, %f\n", parent_half_size.x(), parent_half_size.y(), new_branch.half_size_.x(), new_branch.half_size_.y());
+      //printf("Parent: %f, %f    New: %f, %f\n", parent_half_size.x(), parent_half_size.y(), new_branch.half_size_.x(), new_branch.half_size_.y());
       return new_branch;
     }
 

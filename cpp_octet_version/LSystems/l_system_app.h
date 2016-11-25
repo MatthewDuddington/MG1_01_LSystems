@@ -31,11 +31,11 @@ namespace octet {
     Tree tree_;
 
     int fps = 30;
-    int key_press_time = 1 * fps;
+    int key_press_time = 0.5 * fps;
     int key_press_timer_;
 
     float camera_distance_ = 25;
-    float camera_increment = 5;
+    float camera_increment = 25;
 
     // Function from Octet Invaiderers example
     void draw_text(texture_shader &shader, float x, float y, float scale, const char *text) {
@@ -99,8 +99,9 @@ namespace octet {
           key_press_timer_ = key_press_time;
         }
         else if (is_key_down(key_space)) {
-          tree_.PrepareTree();
-          UpdateCamera();
+          UpdateCameraValue(tree_.PrepareTree());
+          //tree_.PrepareTree();
+          //UpdateCamera();
           key_press_timer_ = key_press_time;
         }
       }
@@ -108,6 +109,11 @@ namespace octet {
 
     void UpdateCamera() {
       camera_to_world_.translate(0, camera_increment, camera_increment);
+    }
+
+    void UpdateCameraValue(float approx_tree_height) {
+      camera_to_world_.loadIdentity();
+      camera_to_world_.translate(0, approx_tree_height * 0.5, approx_tree_height * 0.5);
     }
 
     // Function adapted from Octet Invaiderers example

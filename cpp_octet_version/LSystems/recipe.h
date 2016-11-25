@@ -52,28 +52,7 @@ namespace octet {
 
   public:
     void DefineRecipe() {
-      // TODO Get user input of / read from file the variables
-      axiom_ = "F";
-      order_ = 7;
-      axiom_half_size_.x() = 1;
-      axiom_half_size_.y() = 5;
-      randomise_length_ = 0;
-      thinning_ratio_ = 0.9f;
-      angle_Left_ = 25.7f;
-      angle_right_ = 25.7f;
-      randomise_angle_ = 0;
-      gravity_ = 1.0f;
-
-      // TODO Get user input of / read from file the rules
-      rules_ = {
-        // Variables
-        { 'F', "F[+F]F[-F]F" },
-        // Constants
-        { '-' , "-" },
-        { '+' , "+" },
-        { '[' , "[" },
-        { ']' , "]" },
-      };
+      LoadDesign(2);
 
       seed_ = axiom_;  // Set the starting seed
       printf("DefineRecipe\n");
@@ -92,6 +71,7 @@ namespace octet {
       }
       for (int i = 0; i < number_of_steps; i++) {
         ProcessRules(rules_, seed_);  // Generate the instruction set for building the tree
+        steps_processed_++;
       }
       return seed_;
     }
@@ -111,6 +91,113 @@ namespace octet {
     const float& ThinningRatio() {
       return thinning_ratio_;
     }
+
+    void LoadDesign(int index) {
+      switch (index)
+      {
+      case 1:
+        // TODO Get user input of / read from file the variables
+        axiom_ = "F";
+        order_ = 5;
+        axiom_half_size_.x() = 1;
+        axiom_half_size_.y() = 3.5;
+        randomise_length_ = 0;
+        thinning_ratio_ = 0.6f;
+        angle_Left_ = 25.7f;
+        angle_right_ = 25.7f;
+        randomise_angle_ = 0;
+        gravity_ = 1.0f;
+
+        // TODO Get user input of / read from file the rules
+        rules_ = {
+          // Variables
+          { 'F', "F[+F]F[-F]F" },
+          // Constants
+          { '-' , "-" },
+          { '+' , "+" },
+          { '[' , "[" },
+          { ']' , "]" },
+        };
+        break;
+
+      case 2:
+        // TODO Get user input of / read from file the variables
+        axiom_ = "F";
+        order_ = 5;
+        axiom_half_size_.x() = 1;
+        axiom_half_size_.y() = 3.5;
+        randomise_length_ = 0;
+        thinning_ratio_ = 0.6f;
+        angle_Left_ = 20.0f;
+        angle_right_ = 20.0f;
+        randomise_angle_ = 0;
+        gravity_ = 1.0f;
+
+        // TODO Get user input of / read from file the rules
+        rules_ = {
+          // Variables
+          { 'F', "F[+F]F[-F][F]" },
+          // Constants
+          { '-' , "-" },
+          { '+' , "+" },
+          { '[' , "[" },
+          { ']' , "]" },
+        };
+        break;
+
+      case 3:
+        // TODO Get user input of / read from file the variables
+        axiom_ = "F";
+        order_ = 4;
+        axiom_half_size_.x() = 1;
+        axiom_half_size_.y() = 3.5;
+        randomise_length_ = 0;
+        thinning_ratio_ = 0.6f;
+        angle_Left_ = 22.5f;
+        angle_right_ = 22.5f;
+        randomise_angle_ = 0;
+        gravity_ = 1.0f;
+
+        // TODO Get user input of / read from file the rules
+        rules_ = {
+          // Variables
+          { 'F', "FF-[-F+F+F]+[+F-F-F]" },
+          // Constants
+          { '-' , "-" },
+          { '+' , "+" },
+          { '[' , "[" },
+          { ']' , "]" },
+        };
+        break;
+
+      case 4:
+        // TODO Get user input of / read from file the variables
+        axiom_ = "X";
+        order_ = 7;
+        axiom_half_size_.x() = 1;
+        axiom_half_size_.y() = 3.5;
+        randomise_length_ = 0;
+        thinning_ratio_ = 0.95f;
+        angle_Left_ = 20.0f;
+        angle_right_ = 20.0f;
+        randomise_angle_ = 0;
+        gravity_ = 1.0f;
+
+        // TODO Get user input of / read from file the rules
+        rules_ = {
+          // Variables
+          { 'X', "F[+X]F[-X]+X" },
+          { 'F', "FF" },
+          // Constants
+          { '-' , "-" },
+          { '+' , "+" },
+          { '[' , "[" },
+          { ']' , "]" },
+        };
+        break;
+      }
+    }
+
   };
 
 }
