@@ -39,14 +39,14 @@ namespace octet {
       Branch& new_branch = branches.at(branches.size() - 1);
       
       new_branch.model_to_world_.loadIdentity();  // Reset its transforms
-      new_branch.half_size_ = vec2(parent_half_size.x() * thinning_ratio, parent_half_size.y() * thinning_ratio);  // Adapt the size
+      new_branch.half_size_ = vec2(parent_half_size.x() * thinning_ratio, parent_half_size.y());  // Adapt the size
 
       // Setup the vertex positions
       new_branch.vertices_ = {
-        - parent_half_size.x()     , 0                            , 0,  // Lower left
-          parent_half_size.x()     , 0                            , 0,  // Lower right
-          new_branch.half_size_.x(), new_branch.half_size_.y() * 2, 0,  // Upper right
-        - new_branch.half_size_.x(), new_branch.half_size_.y() * 2, 0   // Upper left
+        - parent_half_size.x()     , - new_branch.half_size_.y() * 2, 0,  // Lower left
+          parent_half_size.x()     , - new_branch.half_size_.y() * 2, 0,  // Lower right
+          new_branch.half_size_.x(), 0                              , 0,  // Upper right
+        - new_branch.half_size_.x(), 0                              , 0   // Upper left
       };
 
       //printf("Parent: %f, %f    New: %f, %f\n", parent_half_size.x(), parent_half_size.y(), new_branch.half_size_.x(), new_branch.half_size_.y());

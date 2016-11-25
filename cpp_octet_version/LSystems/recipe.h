@@ -3,6 +3,8 @@
 //  (c) Matthew Duddington 2016
 //
 
+#include <io.h>
+
 #pragma once
 
 namespace octet {
@@ -72,6 +74,8 @@ namespace octet {
       for (int i = 0; i < number_of_steps; i++) {
         ProcessRules(rules_, seed_);  // Generate the instruction set for building the tree
         steps_processed_++;
+        printf("After iteration %d, seed string is: %", steps_processed_);
+        //std::cout << seed_ << "\n";
       }
       return seed_;
     }
@@ -81,11 +85,11 @@ namespace octet {
     }
 
     const float& LeftRotation() {
-      return angle_Left_;
+      return -angle_Left_;  // Reversed because the branch root is at its top
     }
 
     const float& RightRotation() {
-      return -angle_right_;
+      return angle_right_;  // Reversed because the branch root is at its top
     }
 
     const float& ThinningRatio() {

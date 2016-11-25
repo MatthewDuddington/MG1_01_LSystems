@@ -15,7 +15,6 @@ namespace octet {
 
     // Conceptual 'turtle' for when processing recipe
     struct Turtle {
-      //float rotation;
       mat4t turtle_to_world;
       std::vector<Branch> position_stack;
     };
@@ -53,15 +52,20 @@ namespace octet {
         {
         case 'F':  // Draw forwards
         {
-          turtle.turtle_to_world.translate(0, previous_branch->HalfSize().y() * 2, 0);  // TODO Does this move in World or Model space?
-          if (highest_point < (turtle.turtle_to_world[3][1] + previous_branch->HalfSize().y()) * 1.1) { highest_point = (turtle.turtle_to_world[3][1] + previous_branch->HalfSize().y()) * 1.1; }
-
           vec2 half_size = previous_branch->HalfSize();  // TODO Workaround to stop undefined vec2 being passed (work out why)
+
           float thinning_ratio = 1;
           if (Branch::IsAfterSplit()) { thinning_ratio = recipe_.ThinningRatio(); Branch::IsAfterSplit() = false; }
+          
+          turtle.turtle_to_world.translate(0, previous_branch->HalfSize().y() * 2, 0);
+         
           Branch& new_branch = Branch::NewBranch(branches_, half_size, thinning_ratio);
           new_branch.model_to_world_ = turtle.turtle_to_world;
           previous_branch = &new_branch;
+
+          // Check if camera move needed
+          if (highest_point < (turtle.turtle_to_world[3][1]) * 1.1) { highest_point = (turtle.turtle_to_world[3][1]) * 1.1; }
+          
           break;
         }
         case '-':  // Turn left
