@@ -14,6 +14,18 @@ namespace octet {
 
   class LSystemApp : public octet::app {
 
+    enum ProgramState {
+      SETTING_RECIPE,
+      DRAWING_TREE,
+      VIEWING_SCENE
+    };
+
+    ProgramState program_state_ = SETTING_RECIPE;  // Default state on start
+
+    bool is_add_to_parameter_ = true;
+    bool is_step_by_step_ = false;
+    bool should_reset_camera_zoom_ = true;
+
     // Matrix to transform points in our camera space to the world.
     // This lets us move our camera
     mat4t camera_to_world_;
@@ -30,13 +42,9 @@ namespace octet {
     // For now just work with a single tree
     Tree tree_;
 
-    int fps = 30;
-    int key_press_time = 0.5 * fps;
-    int key_press_timer_;
-
     float camera_distance_ = 25;
-    float camera_increment = 25;
 
+    /*
     // Function from Octet Invaiderers example
     void draw_text(texture_shader &shader, float x, float y, float scale, const char *text) {
       mat4t modelToWorld;
@@ -63,6 +71,7 @@ namespace octet {
 
       glDrawElements(GL_TRIANGLES, num_quads * 6, GL_UNSIGNED_INT, indices);
     }
+    */
 
     void DrawBranches() {
       std::vector<Branch>& branches = tree_.GetBranches();
@@ -71,10 +80,14 @@ namespace octet {
       }
     }
 
+    void UpdateUI() {
+      // TODO draw text to screen
+    }
+
 
   public:
     // this is called when we construct the class
-    LSystemApp(int argc, char **argv) : app(argc, argv), font_(512, 256, "assets/big.fnt") {}
+    LSystemApp(int argc, char **argv) : app(argc, argv) {} // , font_(512, 256, "assets/big.fnt") {}
 
     // this is called once OpenGL is initialized
     void app_init() {
@@ -82,38 +95,103 @@ namespace octet {
       texture_shader_.init();
       colour_shader_.init();
 
+      tree_.GetRecipe().Init();
+
+      // Avoid circular referencing in order to draw live
+      Tree::CameraReference(&camera_to_world_);
+      Tree::ColourShaderReference(&colour_shader_);
+
       // set up the matrices with a camera 5 units from the origin
       camera_to_world_.loadIdentity();
       camera_to_world_.translate(0, camera_distance_, camera_distance_);
 
-      font_texture_ = resource_dict::get_texture_handle(GL_RGBA, "assets/big_0.gif");
+      //font_texture_ = resource_dict::get_texture_handle(GL_RGBA, "assets/big_0.gif");
     }
 
     void MainLoop() {
-      if (key_press_timer_-- > 0) {}
-      else {
-        if (is_key_down(key_enter)) {
+      if (is_key_going_down(key_esc)) {
+        ResetProgram();
+        return;
+      }
+
+      switch (program_state_)
+      {
+      case octet::LSystemApp::SETTING_RECIPE:
+        // Premade recipe loaders
+        if (is_key_down(key_P)) {
+          for (int i = 0; i < tree_.GetRecipe().NumberOfPremadeDesigns(); i++) {
+            if (is_key_going_down(key_1 + i)) {
+              tree_.GetRecipe().LoadDesign(i + 1);
+            }
+          }
+        }
+        // Paramter change keys
+        else if (is_key_going_down(key_plus)) {
+          is_add_to_parameter_ = true;
+        }
+        else if (is_key_going_down(key_minus)) {
+          is_add_to_parameter_ = false;
+        }
+        // Order
+        else if (is_key_going_down(key_1)) {
+          if (is_add_to_parameter_) { tree_.GetRecipe().CurrentDesign().order++; }
+          else { tree_.GetRecipe().CurrentDesign().order--; }
+          printf("Order: %d\n", tree_.GetRecipe().CurrentDesign().order);
+          UpdateUI();
+        }
+        else if (is_key_going_down(key_0)) {
+          is_step_by_step_ = !is_step_by_step_;
+          if (is_step_by_step_) { printf("Step by step: Active\n"); }
+          else { printf("Step by step: Off\n"); }
+        }
+        else if (is_key_going_down(key_enter)) {
           // TODO Hide input controlls 
-          // Run algorithm to create tree string.
-          tree_.GetRecipe().DefineRecipe();
-          key_press_timer_ = key_press_time;
+          program_state_ = DRAWING_TREE;
+          printf("Program state now: Drawing Tree\n");
         }
-        else if (is_key_down(key_space)) {
-          UpdateCameraValue(tree_.PrepareTree());
-          //tree_.PrepareTree();
-          //UpdateCamera();
-          key_press_timer_ = key_press_time;
+        break;
+
+      case octet::LSystemApp::DRAWING_TREE:
+        for (int i = 0; i < 9; i++) {
+          if (is_key_going_down(key_1 + i)) {
+            if (tree_.GrowTree(i + 1, is_step_by_step_) == 0) {
+              UpdateCameraValue(tree_.HeightOfTree());
+              if (!is_step_by_step_ && should_reset_camera_zoom_) { tree_.ResetCameraHeight(); }
+              return;
+            }
+            else {
+              program_state_ == VIEWING_SCENE;
+              printf("Program state now: Viewing Scene\n");
+              return;
+            }
+          }
         }
+        if (is_key_going_down(key_C)) {
+          should_reset_camera_zoom_ = !should_reset_camera_zoom_;
+          if (should_reset_camera_zoom_) { printf("Camera will reset zoom for each iteration\n"); }
+          else { printf("Camera will remain at highest point\n"); }
+        }
+        break;
+
+      case octet::LSystemApp::VIEWING_SCENE:
+        if (is_key_going_down(key_enter)) {
+          ResetProgram();
+        }
+        break;
       }
     }
 
-    void UpdateCamera() {
-      camera_to_world_.translate(0, camera_increment, camera_increment);
+    void ResetProgram() {
+      tree_.ClearTree();
+      is_add_to_parameter_ = true;
+      is_step_by_step_ = false;
+      program_state_ = SETTING_RECIPE;
+      printf("Resetting Program...\nProgram state now: Setting Recipe\n");
     }
 
     void UpdateCameraValue(float approx_tree_height) {
       camera_to_world_.loadIdentity();
-      camera_to_world_.translate(0, approx_tree_height * 0.5, approx_tree_height * 0.5);
+      camera_to_world_.translate(0, approx_tree_height * 0.5f, approx_tree_height * 0.5f);
     }
 
     // Function adapted from Octet Invaiderers example
@@ -135,8 +213,12 @@ namespace octet {
       glEnable(GL_BLEND);
       glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-      DrawBranches();
+      if (program_state_ == DRAWING_TREE) {
+        DrawBranches();
+        if (is_step_by_step_) { tree_.RenderTurtle(colour_shader_, camera_to_world_); }
+      }
 
+      /*
       char some_text[32];
       sprintf(some_text, "This is text drawn");
       draw_text(texture_shader_, -1.75f, 2, 1.0f / 256, some_text);
@@ -144,6 +226,7 @@ namespace octet {
       // move the listener with the camera
       vec4 &cpos = camera_to_world_.w();
       alListener3f(AL_POSITION, cpos.x(), cpos.y(), cpos.z());
+      */
     }
 
   };

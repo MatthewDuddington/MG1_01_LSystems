@@ -16,7 +16,7 @@ namespace octet {
 
     int depth_from_trunk;
 
-    vec2 half_size_ = (1, 1);
+    vec2 half_size_ = (1.0f, 1.0f);
 
     vec4 root_colour_ = { 0.66f, 0.63f, 0.51f, 1 };
     vec4 tip_colour_ = { 0.7f, 0.67f, 0.59f, 1 };
@@ -27,13 +27,16 @@ namespace octet {
     mat4t model_to_world_;
 
     std::array<float, 12> vertices_;
-
-    static bool& IsAfterSplit() { static bool is_after_split; return is_after_split; }
     
     // Loads a new branch into the tree branches array,
     // initialises the new branche's size and vertex positions,
     // returns a reference to the new branch.
-    static Branch& NewBranch(std::vector<Branch>& branches, const vec2& parent_half_size, const float& thinning_ratio) {
+    static Branch& NewBranch( std::vector<Branch>& branches
+      ,                       const vec2& parent_half_size
+      ,                       const float& thinning_ratio
+      ,                       vec3& tip_colour = vec3(1,1,1)
+      ,                       vec3& root_colour = vec3(1,1,1) )
+    {
       // Add a new branch to the branches vector
       branches.push_back(Branch());
       Branch& new_branch = branches.at(branches.size() - 1);

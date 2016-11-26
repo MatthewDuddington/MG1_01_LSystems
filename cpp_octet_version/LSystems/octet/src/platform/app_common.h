@@ -30,9 +30,25 @@ namespace octet {
   enum key {
     // Added:
     key_A = 0x41,
+    key_C = 0x43,
     key_D = 0x44,
     key_W = 0x57,
+    key_P = 0x50,
     key_S = 0x53,
+
+    key_enter = 0x0D,
+    key_plus = 0x2B,
+    key_minus = 0x2D,
+    key_0 = 0x30,
+    key_1,
+    key_2,
+    key_3,
+    key_4,
+    key_5,
+    key_6,
+    key_7,
+    key_8,
+    key_9,
 
     // keys with ascii equivalent, eg. space, esc, enter have their ascii code.
     
@@ -42,7 +58,6 @@ namespace octet {
     key_space = 32,
 
     // other keys have the following codes:
-    key_enter = 0x0D,
     key_f1 = 0x80,
     key_f2,
     key_f3,
@@ -77,7 +92,7 @@ namespace octet {
 
   class app_common {
     static bitset<256>& keys() { static bitset<256> keys; return keys; };
-    bitset<256> prev_keys;
+    static bitset<256>& prev_keys() { static bitset<256> keys; return keys; };
     int mouse_x;
     int mouse_y;
     int mouse_wheel;
@@ -95,7 +110,7 @@ namespace octet {
   public:
     app_common() {
       keys().clear();
-      prev_keys.clear();
+      prev_keys().clear();
       // this memset writes 0 to every byte of keys[]
       mouse_x = mouse_y = 0;
       mouse_abs_x = mouse_abs_y = 0;
@@ -113,7 +128,7 @@ namespace octet {
     }
 
     void end_frame() {
-      prev_keys = keys();
+      prev_keys() = keys();
     }
 
     virtual void draw_world(int x, int y, int w, int h) = 0;
@@ -125,13 +140,13 @@ namespace octet {
     }
 
     /// returns true if a key has gone down this frame
-    bool is_key_going_down(unsigned key) {
-      return keys()[key & 0xff] != 0 && prev_keys[key & 0xff] == 0;
+    static bool is_key_going_down(unsigned key) {
+      return keys()[key & 0xff] != 0 && prev_keys()[key & 0xff] == 0;
     }
 
     /// returns true if a key has gone down this frame
-    bool is_key_going_up(unsigned key) {
-      return keys()[key & 0xff] != 0 && prev_keys[key & 0xff] == 0;
+    static bool is_key_going_up(unsigned key) {
+      return keys()[key & 0xff] != 0 && prev_keys()[key & 0xff] == 0;
     }
 
     /// return the current set of keys down.
@@ -141,17 +156,17 @@ namespace octet {
 
     /// return the previous set of keys down
     bitset<256> get_prev_keys() const {
-      return prev_keys;
+      return prev_keys();
     }
 
     /// return the previous set of keys down
     bitset<256> get_keys_going_down() const {
-      return keys() & ~prev_keys;
+      return keys() & ~prev_keys();
     }
 
     /// return the previous set of keys down
     bitset<256> get_keys_going_up() const {
-      return ~keys() & prev_keys;
+      return ~keys() & prev_keys();
     }
 
     void get_mouse_pos(int &x, int &y) {
