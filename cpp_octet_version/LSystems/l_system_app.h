@@ -15,12 +15,12 @@ namespace octet {
   class LSystemApp : public octet::app {
 
     enum ProgramState {
-      SETTING_RECIPE,
+      RECIPE_SETTINGS,
       DRAWING_TREE,
       VIEWING_SCENE
     };
 
-    ProgramState program_state_ = SETTING_RECIPE;  // Default state on start
+    ProgramState program_state_ = RECIPE_SETTINGS;  // Default state on start
 
     bool is_add_to_parameter_ = true;
     bool is_step_by_step_ = false;
@@ -43,6 +43,10 @@ namespace octet {
     Tree tree_;
 
     float camera_distance_ = 25;
+
+    // Increment / decrement amounts for hotkey paramters
+    float angle_increment_ = 0.5f;  // Rotation Left and Right
+    float size_increment_ = 0.05f;  // Branch Circumference and Length
 
     /*
     // Function from Octet Invaiderers example
@@ -75,7 +79,7 @@ namespace octet {
 
     void DrawBranches() {
       std::vector<Branch>& branches = tree_.GetBranches();
-      for (int i = 0; i < branches.size(); i++) {
+      for (int i = 1; i < branches.size(); i++) {  // Ignore branch (0) as this is simply to validate the previous branch initial reference
         branches.at(i).Render(colour_shader_, camera_to_world_);
       }
     }
@@ -88,15 +92,59 @@ namespace octet {
       tree_.ClearTree();
       is_add_to_parameter_ = true;
       is_step_by_step_ = false;
-      program_state_ = SETTING_RECIPE;
+      program_state_ = RECIPE_SETTINGS;
       tree_.rotation_load_type_ = Tree::LOAD_FROM_SAVE;
+      Tree::InPolarMode() = false;
       printf("Resetting Program...\nProgram state now: Setting Recipe\n");
+      PrintRecipeSettingInfo();
+    }
+
+    void PrintRecipeSettingInfo() {
+      printf(
+        "********************************************************************************"
+        "\n"
+        "INSTRUCTIONS: \n"
+        "  Hold P and press number from 1 to %d to load the prarameters of a predesigned LSystem \n"
+        "  Press Enter to enter drawing view \n"
+        "\n"
+        "  Press 0 to toggle 'Step by step' mode (experimental!) \n"
+        "\n"
+        "  Press + or - to switch to incrementing or decrementing the following recipe parameters: \n"
+        "      1 -> Max Order      +/- 1  (a.k.a. maximum number of iteration steps) \n"
+        "      2 -> Rotation Left  +/- %.1f degrees \n"
+        "      3 -> Rotation Right +/- %.1f degrees \n"
+        "      4 -> Branch Circumference  +/- %.2f meters \n"
+        "      5 -> Branch Length         +/- %.2f meters \n"
+        "\n"
+        "  Hold S and press the corosponding paramter number to make it stochastic: (experimental!)\n"
+        "      2 -> Rotation Left \n"
+        "      3 -> Rotation Right \n"
+        "      5 -> Branch Length \n"
+        "\n"
+        "  At any time press Esc to return to this recipe settings mode \n"
+        "\n"
+        "  Press I to print these instructions to the console again \n"
+        "\n"
+        "********************************************************************************"
+        "\n"
+        , 
+        tree_.GetRecipe().NumberOfPremadeDesigns(),
+        angle_increment_,
+        angle_increment_,
+        size_increment_,
+        size_increment_
+      );
+    }
+
+    void PrintDrawingInstructions() {
+
     }
 
     void UpdateCameraValue(float approx_tree_height) {
       camera_to_world_.loadIdentity();
       camera_to_world_.translate(0, approx_tree_height * 0.5f, approx_tree_height * 0.5f);
     }
+
 
 
   public:
@@ -111,15 +159,13 @@ namespace octet {
 
       tree_.GetRecipe().Init();
 
-      // Avoid circular referencing in order to draw live
-      Tree::CameraReference(&camera_to_world_);
-      Tree::ColourShaderReference(&colour_shader_);
-
       // set up the matrices with a camera 5 units from the origin
       camera_to_world_.loadIdentity();
       camera_to_world_.translate(0, camera_distance_, camera_distance_);
 
       //font_texture_ = resource_dict::get_texture_handle(GL_RGBA, "assets/big_0.gif");
+
+      ResetProgram();
     }
 
     void MainLoop() {
@@ -130,34 +176,59 @@ namespace octet {
 
       switch (program_state_)
       {
-      case octet::LSystemApp::SETTING_RECIPE:
+      case octet::LSystemApp::RECIPE_SETTINGS:
+        // Display menu
+        if (is_key_going_down(key_I)) {
+          PrintRecipeSettingInfo();
+        }
         // Premade recipe loaders
-        if (is_key_down(key_P)) {
-          for (int i = 0; i < tree_.GetRecipe().NumberOfPremadeDesigns(); i++) {
-            if (is_key_going_down(key_1 + i)) {
+        else if (is_key_down(key_P)) {  // Hold P
+          for (int i = 0; i < tree_.GetRecipe().NumberOfPremadeDesigns(); i++) {  // Prevent array out of bounds
+            if (is_key_going_down(key_1 + i)) {  // Number corisponding to design
               tree_.GetRecipe().LoadDesign(i + 1);
             }
           }
         }
         // Paramter change keys
-        else if (is_key_going_down(key_plus)) {
+        else if (is_key_going_down(key_plus) || is_key_going_down(key_equals)) {  // Plus (equals key on UK English keyboard layout saves having to hold shift)
           is_add_to_parameter_ = true;
         }
-        else if (is_key_going_down(key_minus)) {
+        else if (is_key_going_down(key_minus)) {  // Minus
           is_add_to_parameter_ = false;
         }
         // Order
         else if (is_key_going_down(key_1)) {
           if (is_add_to_parameter_) { tree_.GetRecipe().CurrentDesign().order++; }
           else { tree_.GetRecipe().CurrentDesign().order--; }
-          printf("Order: %d\n", tree_.GetRecipe().CurrentDesign().order);
+          printf("Max Order: %d\n", tree_.GetRecipe().CurrentDesign().order);
           UpdateUI();
         }
+        // Angle Left
+        else if (is_key_going_down(key_2)) {
+          if (is_add_to_parameter_) { tree_.GetRecipe().CurrentDesign().angle_Left += angle_increment_; }
+          else { tree_.GetRecipe().CurrentDesign().angle_Left -= angle_increment_; }
+          printf("Angle Left: %d\n", tree_.GetRecipe().CurrentDesign().angle_Left);
+          UpdateUI();
+        }
+        // Angle Right
+        else if (is_key_going_down(key_3)) {
+          if (is_add_to_parameter_) { tree_.GetRecipe().CurrentDesign().angle_right += angle_increment_; }
+          else { tree_.GetRecipe().CurrentDesign().angle_right -= angle_increment_; }
+          printf("Angle Right: %d\n", tree_.GetRecipe().CurrentDesign().angle_right);
+          UpdateUI();
+        }
+        // Turn 'step by step' mode on / off
         else if (is_key_going_down(key_0)) {
           is_step_by_step_ = !is_step_by_step_;
           if (is_step_by_step_) { printf("Step by step: Active\n"); }
           else { printf("Step by step: Off\n"); }
         }
+        else if (is_key_going_down(key_M)) {
+          Tree::InPolarMode() = !Tree::InPolarMode();
+          if (Tree::InPolarMode()) { printf("Polar mode: Active\n"); }
+          else { printf("Matrix mode: Active\n"); }
+        }
+        // Enter tree drawing mode
         else if (is_key_going_down(key_enter)) {
           // TODO Hide input controlls 
           program_state_ = DRAWING_TREE;

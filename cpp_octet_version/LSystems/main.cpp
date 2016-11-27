@@ -33,20 +33,6 @@
 
 int main(int argc, char **argv)
 {
-  /*
-  glutInit(&argc, argv);
-  glutCreateWindow("L-System Trees");
-
-  #ifdef WIN32
-    // On windows, we need to do this to get modern OpenGL. Thanks, Microsoft.
-    glewInit();
-    if (!glewIsSupported("GL_VERSION_2_0"))
-    {
-      return 1;
-    }
-  #endif
-  */
-
     // set up the platform.
     octet::app::init_all(argc, argv);
 

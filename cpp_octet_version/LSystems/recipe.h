@@ -119,9 +119,9 @@ namespace octet {
 
       TreeDesign design_A{ "F"    //Axiom
         , 5      // Order
-        , vec2(0.1f, 0.35f)   // Half size x
+        , vec2(0.1f, 0.25f)   // Half size x
         , 0      // Randomise length
-        , 0.95f  // Thinning ratio
+        , 0.99f  // Thinning ratio
         , 25.7f  // Angle left turn
         , 25.7f  // Angle right turn
         , 0      // Randomise angle
@@ -271,6 +271,8 @@ namespace octet {
       return Designs().size() - 1;
     }
 
+
+
     // Mutable var getter functions
     TreeDesign& CurrentDesign() {
       return *tree_design_;
@@ -302,8 +304,11 @@ namespace octet {
           ProcessRules();  // Generate the instruction set for building the tree
         }
         current_stored_seed_order = requested_order;
-        printf("At order %d, seed string is: ", requested_order);
-        std::cout << seed_ << "\n";
+        
+        if (requested_order < 3) {
+          printf("At order %d, seed string is: ", requested_order);
+          std::cout << seed_ << "\n";
+        }
       }
       return seed_;
     }

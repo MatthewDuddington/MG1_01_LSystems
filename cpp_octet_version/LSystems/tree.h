@@ -13,16 +13,18 @@ namespace octet {
     // Conceptual 'turtle' for when processing recipe
     struct Turtle {
       mat4t turtle_to_world;
-      std::vector<Branch> position_stack;
-      bool is_after_split = true;
+      std::vector<Branch> matrix_version_position_stack;
+      
+      vec3 position = ( 0,0,0 );
+      std::vector<vec3> polar_version_position_stack;
+      
+      bool is_after_split = true;  // Tells draw forward whether it should thin the next branch
+      int current_seed_step = 0;  // Enables memory of what the turtle should draw next in 'step by step' mode
 
-      //vec3 position_and_z_rotation;
-      //std::vector<vec3> alt_position_stack;
       float rotation = 0;  // Keep track of rotation total for remove rotation option
       std::vector<float> rotation_stack;
 
-      int current_seed_step = 0;  // Enables memory of what the turtle should draw next in 'step by step' mode
-      std::vector<Branch> turtle_sprite;       // Misusing the branch class to render a square
+      std::vector<Branch> turtle_sprite;  // Misusing the branch class to render a square
     };
 
     Turtle turtle_;
@@ -37,7 +39,6 @@ namespace octet {
 
     float height_of_tree_ = 0;  // Store the approx highest y value (for camera distance)
 
-
   public:
     enum RotationLoadType {
       LOAD_FROM_SAVE,
@@ -51,21 +52,16 @@ namespace octet {
 
     }
 
-    // Avoid circular referencing in order to draw step by step
-    static mat4t& CameraReference(mat4t* camera_to_world = NULL) {
-      static mat4t* camera_to_world_;
-      if (camera_to_world != NULL) { camera_to_world_ = camera_to_world; }
-      return *camera_to_world_;
-    }
 
-    static color_shader& ColourShaderReference(color_shader* colour_shader = NULL) {
-      static color_shader* colour_shader_;
-      if (colour_shader != NULL) { colour_shader_ = colour_shader; }
-      return *colour_shader_;
+
+    // Const var getter functions
+    const float HeightOfTree() {
+      return height_of_tree_;
     }
 
 
 
+    // Mutable var getter functions
     Recipe& GetRecipe() {
       return recipe_;
     }
@@ -74,12 +70,14 @@ namespace octet {
       return branches_;
     }
 
-    float HeightOfTree() {
-      return height_of_tree_;
+    static bool& InPolarMode() {
+      static bool should_use_polar_mode;
+      return should_use_polar_mode;
     }
 
 
 
+    // Public functions
     void ClearTree() {
       // Reset branches
       branches_.clear();
@@ -101,21 +99,22 @@ namespace octet {
         // Reset
         ClearTree();
 
-        // Add axiom trunk
+        // Add extra axiom trunk
         previous_branch_ = &Branch::NewBranch(branches_, recipe_.AxiomHalfSize(), recipe_.ThinningRatio());
-        previous_branch_->model_to_world_.translate(0, recipe_.AxiomHalfSize().y() * 2, 0);
+        previous_branch_->ModelToWorld().translate(0, recipe_.AxiomHalfSize().y() * 2, 0);
 
         // Start on step 1 (otherwise we go out of range!)
         turtle_.current_seed_step = 1;
         // Reset turtle position
+        //turtle_.turtle_to_world = previous_branch_->model_to_world_;
         turtle_.turtle_to_world.loadIdentity();
-        turtle_.turtle_to_world = previous_branch_->model_to_world_;
-        //turtle.position_and_z_rotation = vec3(0, 0, 0);
+        if (InPolarMode()) { turtle_.position = vec3(0, 0, 0); }
+        turtle_.rotation = 0;
         
         // If on 'step by step' mode add the visual marker to the turtle
         if (is_step_by_step) {
           Branch::NewBranch(turtle_.turtle_sprite, vec2(0.1f, 0.1f), 1.0f, vec3(1, 0, 0), vec3(0, 0, 1));
-          turtle_.turtle_sprite.at(0).model_to_world_.loadIdentity();
+          turtle_.turtle_sprite.at(0).ModelToWorld().loadIdentity();
         }
       }
 
@@ -124,7 +123,7 @@ namespace octet {
       if (is_step_by_step) {
         loop_iterator = turtle_.current_seed_step + 1;  // In 'step by step' we only want to do one run through the loop starting at the next seed character
       }
-      else { loop_iterator = seed.size(); }  // Otherwise we want to run through the whole seed
+      else { loop_iterator = seed.size() + 1; }  // Otherwise we want to run through the whole seed
 
       // Loop through recipe and apply rules to 'turtle'
       for (; turtle_.current_seed_step < loop_iterator; turtle_.current_seed_step++) {
@@ -133,23 +132,56 @@ namespace octet {
           //*/
         case 'F':  // Draw forwards
         {
-          printf("F   \nAbout to go forwards. Angle is: %f\n", turtle_.rotation);
+          if (seed_evolution_order < 3) { printf("F   \nAbout to go forwards. Angle is: %f\n", turtle_.rotation); }  // DEBUG
           vec2 half_size = previous_branch_->HalfSize();  // TODO Workaround to stop undefined vec2 being passed (work out why)
 
           // Check if thinning is needed
           float thinning_ratio = 1.0f;
           if (turtle_.is_after_split) {
-            thinning_ratio = recipe_.ThinningRatio(); 
+            if (turtle_.rotation + 90 > 95.0f && turtle_.rotation + 90 < 85.0f) { thinning_ratio = recipe_.ThinningRatio(); }
+            else { thinning_ratio = recipe_.ThinningRatio() + ((1 - recipe_.ThinningRatio()) * 0.5); }
             turtle_.is_after_split = false;
           }
 
-          // Move turtle to end of nex brach position
-          turtle_.turtle_to_world.translate(0, previous_branch_->HalfSize().y() * 2.0f, 0);
-          if (is_step_by_step) { turtle_.turtle_sprite.at(0).model_to_world_ = turtle_.turtle_to_world; }
+          // Move turtle to end of next brach position
+          if (InPolarMode()) {
+            // Polar version
+            float turtle_polar_rotation_radians = (turtle_.rotation + 90) * atan(1) / 45;
+            float new_x_offset = half_size.length() * 2 * cos(turtle_polar_rotation_radians);
+            float new_y_offset = half_size.length() * 2 * sin(turtle_polar_rotation_radians);
+            if (seed_evolution_order < 3) { printf("dx: %f,   dy: %f\n", new_x_offset, new_y_offset); }  // DEBUG
+            turtle_.turtle_to_world.translate(new_x_offset, new_y_offset, 0);
+            turtle_.position += vec3(new_x_offset, new_y_offset, 0);
+          }
+          else {
+            // Matrix version
+            turtle_.turtle_to_world.translate(0, previous_branch_->HalfSize().y() * 2.0f, 0);
+            if (is_step_by_step) { turtle_.turtle_sprite.at(0).ModelToWorld() = turtle_.turtle_to_world; }
+          }
 
+          // DEBUG Print matrix
+          if (seed_evolution_order < 3) {
+            for (int x = 0; x < 4; x++) {
+              for (int y = 0; y < 4; y++) {
+                printf("%f,  ", turtle_.turtle_to_world[x][y]);
+              }
+              printf("\n");
+            }
+            printf("Turtle Pos: %f, %f, %f", turtle_.position.x(), turtle_.position.y(), turtle_.position.z());
+            printf("\n");
+          }
+          
           // Instatiate new branch behind turtle
           Branch& new_branch = Branch::NewBranch(branches_, half_size, thinning_ratio);
-          new_branch.model_to_world_ = turtle_.turtle_to_world;
+          if (InPolarMode()) {
+            // Polar version
+            new_branch.ModelToWorld().translate(turtle_.position);
+            new_branch.ModelToWorld().rotateZ(turtle_.rotation);
+          }
+          else {
+            // Matrix version
+            new_branch.ModelToWorld() = turtle_.turtle_to_world;
+          }
           previous_branch_ = &new_branch;
 
           // Check if camera move needed
@@ -158,60 +190,93 @@ namespace octet {
         }
 
         case '-':  // Turn Right
-          printf("-   \nJust about to Turn Right. Angle is: %f   ", turtle_.rotation);
+          // Polar Version
           turtle_.rotation += recipe_.RightRotation();
-          turtle_.turtle_to_world.rotateZ(recipe_.RightRotation());
-          if (is_step_by_step) { turtle_.turtle_sprite.at(0).model_to_world_ = turtle_.turtle_to_world; }
-          turtle_.is_after_split = true;
-          printf("Just turned Right. Angle is: %f\n", turtle_.rotation);
+
+          if (!InPolarMode()) {
+            // Matrix version
+            turtle_.turtle_to_world.rotateZ(recipe_.RightRotation());
+
+            if (is_step_by_step) { turtle_.turtle_sprite.at(0).ModelToWorld() = turtle_.turtle_to_world; }
+          }
+
+          if (seed_evolution_order < 3) { printf("-   \nJust turned Right, angle is now: %f\n\n", turtle_.rotation); }  // DEBUG
           break;
 
         case '+':  // Turn Left
-          printf("+   \nJust about to Turn Left. Angle is: %f   ", turtle_.rotation);
+          // Polar version
           turtle_.rotation += recipe_.LeftRotation();
-          turtle_.turtle_to_world.rotateZ(recipe_.LeftRotation());
-          if (is_step_by_step) { turtle_.turtle_sprite.at(0).model_to_world_ = turtle_.turtle_to_world; }
-          turtle_.is_after_split = true;
-          printf("Just turned Left. Angle is: %f\n", turtle_.rotation);
+          
+          if (!InPolarMode()) {
+            // Matrix version
+            turtle_.turtle_to_world.rotateZ(recipe_.LeftRotation()); 
+
+            if (is_step_by_step) { turtle_.turtle_sprite.at(0).ModelToWorld() = turtle_.turtle_to_world; }
+          }
+          
+          if (seed_evolution_order < 3) { printf("+   \nJust turned Left, angle is now: %f\n\n", turtle_.rotation); }  // DEBUG
           break;
 
         case '[':  // Save position
-          turtle_.position_stack.push_back(*previous_branch_);
-          turtle_.rotation_stack.push_back(turtle_.rotation);
-          printf("[   \nSaved Position %d on stack. And angle is %f\n", turtle_.position_stack.size(), turtle_.rotation);
+          turtle_.matrix_version_position_stack.push_back(*previous_branch_);  // Need this in both modes for previous branch size
+          turtle_.rotation_stack.push_back(turtle_.rotation);  // Need this in both modes 
+            
+          if (InPolarMode()) {
+            // Polar version
+            turtle_.polar_version_position_stack.push_back(turtle_.position);
+          }
+
+          turtle_.is_after_split = true;
+
+          if (seed_evolution_order < 3) { printf("[   \nSaved Position %d on stack, angle is now: %f\n\n", turtle_.matrix_version_position_stack.size(), turtle_.rotation); }  // DEBUG
           break;
 
         case ']':  // Load position
-          previous_branch_ = &turtle_.position_stack.at(turtle_.position_stack.size() - 1);
+          previous_branch_ = &turtle_.matrix_version_position_stack.at(turtle_.matrix_version_position_stack.size() - 1);  // Need this in both cases for previous branch size
           
-          turtle_.turtle_to_world = turtle_.position_stack.at(turtle_.position_stack.size() - 1).model_to_world_;
-          turtle_.position_stack.pop_back();
-          
-          /*if (rotation_load_type_ == LOAD_FROM_SAVE) {
-            vec3 temp_pos = vec3(turtle_.turtle_to_world[3][0], turtle_.turtle_to_world[3][1], turtle_.turtle_to_world[3][2]);
-            turtle_.turtle_to_world.loadIdentity();
-            turtle_.turtle_to_world.translate(temp_pos);
-            turtle_.turtle_to_world.rotateZ(turtle_.rotation_stack.at(turtle_.rotation_stack.size() - 1));
-            turtle_.rotation_stack.pop_back();
-          }*/
-          if (rotation_load_type_ == ZERO_OUT) {
-            turtle_.turtle_to_world.rotateZ(-turtle_.rotation);
-            turtle_.rotation_stack.clear();
-            turtle_.rotation = 0;
-          }
-          else if (rotation_load_type_ == PRESERVE_CURRENT) {
-            turtle_.turtle_to_world.rotateZ(-turtle_.rotation_stack.at(turtle_.rotation_stack.size() - 1));
-            turtle_.rotation_stack.pop_back();
-            turtle_.turtle_to_world.rotateZ(turtle_.rotation);
-          }
-          // If it's LOAD_FROM_SAVE this has inherently already been done through the matrix copy - Or not as the case may be???
+          if (InPolarMode()) {
+            // Polar version
+            float dx = turtle_.polar_version_position_stack.at(turtle_.polar_version_position_stack.size() - 1).x() - turtle_.position.x();
+            float dy = turtle_.polar_version_position_stack.at(turtle_.polar_version_position_stack.size() - 1).y() - turtle_.position.y();
+            turtle_.turtle_to_world.translate(dx, dy, 0);
+            turtle_.position = turtle_.polar_version_position_stack.at(turtle_.polar_version_position_stack.size() - 1);
+            turtle_.polar_version_position_stack.pop_back();
 
-          turtle_.rotation = turtle_.position_stack.size() + 1, turtle_.rotation;
-          printf("]   \nLoaded Position %d from stack. And angle is %f\n", turtle_.position_stack.size() + 1, turtle_.rotation);
-          turtle_.position_stack.pop_back();
+            if (rotation_load_type_ == LOAD_FROM_SAVE) {
+              turtle_.rotation = turtle_.rotation_stack.at(turtle_.rotation_stack.size() - 1);
+              turtle_.rotation_stack.pop_back();
+            }
+            else if (rotation_load_type_ == ZERO_OUT) {
+            }
+            else if (rotation_load_type_ == PRESERVE_CURRENT) {
+            }
 
-          if (is_step_by_step) { turtle_.turtle_sprite.at(0).model_to_world_ = turtle_.turtle_to_world; }
-          //turtle_.is_after_split = true;
+            turtle_.matrix_version_position_stack.pop_back();
+          }
+          else {
+            // Matrix version
+
+            turtle_.turtle_to_world = turtle_.matrix_version_position_stack.at(turtle_.matrix_version_position_stack.size() - 1).ModelToWorld();
+            turtle_.matrix_version_position_stack.pop_back();
+
+            // If rotation_load_type_ == LOAD_FROM_SAVE -> This should be inherently done by copying the matrix
+            if (rotation_load_type_ == ZERO_OUT) {
+              turtle_.turtle_to_world.rotateZ(-turtle_.rotation);
+              turtle_.rotation_stack.clear();
+              turtle_.rotation = 0;
+            }
+            else if (rotation_load_type_ == PRESERVE_CURRENT) {
+              turtle_.turtle_to_world.rotateZ(-turtle_.rotation_stack.at(turtle_.rotation_stack.size() - 1));
+              turtle_.rotation_stack.pop_back();
+              turtle_.turtle_to_world.rotateZ(turtle_.rotation);
+            }
+
+            if (is_step_by_step) { turtle_.turtle_sprite.at(0).ModelToWorld() = turtle_.turtle_to_world; }
+          }
+
+          turtle_.is_after_split = true;
+
+          if (seed_evolution_order < 3) { printf("]   \nLoaded Position %d from stack, angle is now: %f\n\n", turtle_.matrix_version_position_stack.size() + 1, turtle_.rotation); }  // DEBUG
           break;
         }
         /*/
@@ -226,8 +291,8 @@ namespace octet {
         turtle.position_and_z_rotation.y() = half_size.y() * 2 * sin(turtle.position_and_z_rotation.z());
 
         Branch& new_branch = Branch::NewBranch(branches_, half_size, thinning_ratio);
-        new_branch.model_to_world_.translate(turtle.position_and_z_rotation.x(), turtle.position_and_z_rotation.y(), 0);
-        new_branch.model_to_world_.rotateZ(turtle.position_and_z_rotation.z());
+        new_branch.ModelToWorld().translate(turtle.position_and_z_rotation.x(), turtle.position_and_z_rotation.y(), 0);
+        new_branch.ModelToWorld().rotateZ(turtle.position_and_z_rotation.z());
 
         previous_branch = &new_branch;
 
@@ -247,12 +312,12 @@ namespace octet {
         break;
 
         case '[':
-        turtle.alt_position_stack.push_back(turtle.position_and_z_rotation);
+        turtle.polar_version_position_stack.push_back(turtle.position_and_z_rotation);
         break;
 
         case ']':
-        turtle.position_and_z_rotation = turtle.alt_position_stack.at(turtle.alt_position_stack.size() - 1);
-        turtle.alt_position_stack.pop_back();
+        turtle.position_and_z_rotation = turtle.polar_version_position_stack.at(turtle.polar_version_position_stack.size() - 1);
+        turtle.polar_version_position_stack.pop_back();
         break;
         }
         //*/

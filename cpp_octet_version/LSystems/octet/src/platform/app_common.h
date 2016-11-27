@@ -32,6 +32,8 @@ namespace octet {
     key_A = 0x41,
     key_C = 0x43,
     key_D = 0x44,
+    key_I = 0x49,
+    key_M = 0x4D,
     key_R = 0x52,
     key_W = 0x57,
     key_P = 0x50,
@@ -40,6 +42,8 @@ namespace octet {
     key_enter = 0x0D,
     key_plus = 0x2B,
     key_minus = 0x2D,
+    key_equals = 0x3D,
+
     key_0 = 0x30,
     key_1,
     key_2,

@@ -14,6 +14,10 @@ namespace octet {
 
   class Branch {
 
+    mat4t model_to_world_;
+   
+    std::array<float, 12> vertices_;
+    
     int depth_from_trunk;
 
     vec2 half_size_ = (1.0f, 1.0f);
@@ -22,12 +26,17 @@ namespace octet {
     vec4 tip_colour_ = { 0.7f, 0.67f, 0.59f, 1 };
 
 
-  public:
-    
-    mat4t model_to_world_;
 
-    std::array<float, 12> vertices_;
+  public:
+    // Mutable var getter functions
+    mat4t& ModelToWorld() {
+      return model_to_world_;
+    }
+
+
     
+    // Public functions
+
     // Loads a new branch into the tree branches array,
     // initialises the new branche's size and vertex positions,
     // returns a reference to the new branch.
@@ -52,7 +61,7 @@ namespace octet {
         - new_branch.half_size_.x(), 0                              , 0   // Upper left
       };
 
-      //printf("Parent: %f, %f    New: %f, %f\n", parent_half_size.x(), parent_half_size.y(), new_branch.half_size_.x(), new_branch.half_size_.y());
+      //printf("Parent: %f, %f    New: %f, %f\n", parent_half_size.x(), parent_half_size.y(), new_branch.half_size_.x(), new_branch.half_size_.y());  // DEBUG
       return new_branch;
     }
 
