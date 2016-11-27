@@ -32,6 +32,7 @@ namespace octet {
     key_A = 0x41,
     key_C = 0x43,
     key_D = 0x44,
+    key_R = 0x52,
     key_W = 0x57,
     key_P = 0x50,
     key_S = 0x53,

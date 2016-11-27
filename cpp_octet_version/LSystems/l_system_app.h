@@ -84,6 +84,20 @@ namespace octet {
       // TODO draw text to screen
     }
 
+    void ResetProgram() {
+      tree_.ClearTree();
+      is_add_to_parameter_ = true;
+      is_step_by_step_ = false;
+      program_state_ = SETTING_RECIPE;
+      tree_.rotation_load_type_ = Tree::LOAD_FROM_SAVE;
+      printf("Resetting Program...\nProgram state now: Setting Recipe\n");
+    }
+
+    void UpdateCameraValue(float approx_tree_height) {
+      camera_to_world_.loadIdentity();
+      camera_to_world_.translate(0, approx_tree_height * 0.5f, approx_tree_height * 0.5f);
+    }
+
 
   public:
     // this is called when we construct the class
@@ -171,6 +185,11 @@ namespace octet {
           if (should_reset_camera_zoom_) { printf("Camera will reset zoom for each iteration\n"); }
           else { printf("Camera will remain at highest point\n"); }
         }
+        else if (is_key_down(key_R)) {
+          if      (is_key_going_down(key_A)) { tree_.rotation_load_type_ = Tree::LOAD_FROM_SAVE;   printf("Rotation from saved position will be loaded upon load position\n"); }
+          else if (is_key_going_down(key_S)) { tree_.rotation_load_type_ = Tree::ZERO_OUT;         printf("Rotation will be zeroed out upon load position\n"); }
+          else if (is_key_going_down(key_D)) { tree_.rotation_load_type_ = Tree::PRESERVE_CURRENT; printf("Current rotation will be preserved upon load position\n"); }
+        }
         break;
 
       case octet::LSystemApp::VIEWING_SCENE:
@@ -179,19 +198,6 @@ namespace octet {
         }
         break;
       }
-    }
-
-    void ResetProgram() {
-      tree_.ClearTree();
-      is_add_to_parameter_ = true;
-      is_step_by_step_ = false;
-      program_state_ = SETTING_RECIPE;
-      printf("Resetting Program...\nProgram state now: Setting Recipe\n");
-    }
-
-    void UpdateCameraValue(float approx_tree_height) {
-      camera_to_world_.loadIdentity();
-      camera_to_world_.translate(0, approx_tree_height * 0.5f, approx_tree_height * 0.5f);
     }
 
     // Function adapted from Octet Invaiderers example

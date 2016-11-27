@@ -18,6 +18,8 @@ namespace octet {
 
       //vec3 position_and_z_rotation;
       //std::vector<vec3> alt_position_stack;
+      float rotation = 0;  // Keep track of rotation total for remove rotation option
+      std::vector<float> rotation_stack;
 
       int current_seed_step = 0;  // Enables memory of what the turtle should draw next in 'step by step' mode
       std::vector<Branch> turtle_sprite;       // Misusing the branch class to render a square
@@ -37,6 +39,14 @@ namespace octet {
 
 
   public:
+    enum RotationLoadType {
+      LOAD_FROM_SAVE,
+      ZERO_OUT,
+      PRESERVE_CURRENT
+    };
+
+    RotationLoadType rotation_load_type_ = LOAD_FROM_SAVE;
+
     Tree() {
 
     }
@@ -93,11 +103,13 @@ namespace octet {
 
         // Add axiom trunk
         previous_branch_ = &Branch::NewBranch(branches_, recipe_.AxiomHalfSize(), recipe_.ThinningRatio());
+        previous_branch_->model_to_world_.translate(0, recipe_.AxiomHalfSize().y() * 2, 0);
 
         // Start on step 1 (otherwise we go out of range!)
         turtle_.current_seed_step = 1;
         // Reset turtle position
         turtle_.turtle_to_world.loadIdentity();
+        turtle_.turtle_to_world = previous_branch_->model_to_world_;
         //turtle.position_and_z_rotation = vec3(0, 0, 0);
         
         // If on 'step by step' mode add the visual marker to the turtle
@@ -116,11 +128,12 @@ namespace octet {
 
       // Loop through recipe and apply rules to 'turtle'
       for (; turtle_.current_seed_step < loop_iterator; turtle_.current_seed_step++) {
-        switch (seed.at(turtle_.current_seed_step))
+        switch (seed.at(turtle_.current_seed_step - 1))
         {
           //*/
         case 'F':  // Draw forwards
         {
+          printf("F   \nAbout to go forwards. Angle is: %f\n", turtle_.rotation);
           vec2 half_size = previous_branch_->HalfSize();  // TODO Workaround to stop undefined vec2 being passed (work out why)
 
           // Check if thinning is needed
@@ -144,26 +157,59 @@ namespace octet {
           break;
         }
 
-        case '-':  // Turn left
-          turtle_.turtle_to_world.rotateZ(recipe_.LeftRotation());
-          if (is_step_by_step) { turtle_.turtle_sprite.at(0).model_to_world_ = turtle_.turtle_to_world; }
-          turtle_.is_after_split = true;
-          break;
-
-        case '+':  // Turn right
+        case '-':  // Turn Right
+          printf("-   \nJust about to Turn Right. Angle is: %f   ", turtle_.rotation);
+          turtle_.rotation += recipe_.RightRotation();
           turtle_.turtle_to_world.rotateZ(recipe_.RightRotation());
           if (is_step_by_step) { turtle_.turtle_sprite.at(0).model_to_world_ = turtle_.turtle_to_world; }
           turtle_.is_after_split = true;
+          printf("Just turned Right. Angle is: %f\n", turtle_.rotation);
+          break;
+
+        case '+':  // Turn Left
+          printf("+   \nJust about to Turn Left. Angle is: %f   ", turtle_.rotation);
+          turtle_.rotation += recipe_.LeftRotation();
+          turtle_.turtle_to_world.rotateZ(recipe_.LeftRotation());
+          if (is_step_by_step) { turtle_.turtle_sprite.at(0).model_to_world_ = turtle_.turtle_to_world; }
+          turtle_.is_after_split = true;
+          printf("Just turned Left. Angle is: %f\n", turtle_.rotation);
           break;
 
         case '[':  // Save position
           turtle_.position_stack.push_back(*previous_branch_);
+          turtle_.rotation_stack.push_back(turtle_.rotation);
+          printf("[   \nSaved Position %d on stack. And angle is %f\n", turtle_.position_stack.size(), turtle_.rotation);
           break;
 
         case ']':  // Load position
           previous_branch_ = &turtle_.position_stack.at(turtle_.position_stack.size() - 1);
-          turtle_.turtle_to_world = previous_branch_->model_to_world_;
+          
+          turtle_.turtle_to_world = turtle_.position_stack.at(turtle_.position_stack.size() - 1).model_to_world_;
           turtle_.position_stack.pop_back();
+          
+          /*if (rotation_load_type_ == LOAD_FROM_SAVE) {
+            vec3 temp_pos = vec3(turtle_.turtle_to_world[3][0], turtle_.turtle_to_world[3][1], turtle_.turtle_to_world[3][2]);
+            turtle_.turtle_to_world.loadIdentity();
+            turtle_.turtle_to_world.translate(temp_pos);
+            turtle_.turtle_to_world.rotateZ(turtle_.rotation_stack.at(turtle_.rotation_stack.size() - 1));
+            turtle_.rotation_stack.pop_back();
+          }*/
+          if (rotation_load_type_ == ZERO_OUT) {
+            turtle_.turtle_to_world.rotateZ(-turtle_.rotation);
+            turtle_.rotation_stack.clear();
+            turtle_.rotation = 0;
+          }
+          else if (rotation_load_type_ == PRESERVE_CURRENT) {
+            turtle_.turtle_to_world.rotateZ(-turtle_.rotation_stack.at(turtle_.rotation_stack.size() - 1));
+            turtle_.rotation_stack.pop_back();
+            turtle_.turtle_to_world.rotateZ(turtle_.rotation);
+          }
+          // If it's LOAD_FROM_SAVE this has inherently already been done through the matrix copy - Or not as the case may be???
+
+          turtle_.rotation = turtle_.position_stack.size() + 1, turtle_.rotation;
+          printf("]   \nLoaded Position %d from stack. And angle is %f\n", turtle_.position_stack.size() + 1, turtle_.rotation);
+          turtle_.position_stack.pop_back();
+
           if (is_step_by_step) { turtle_.turtle_sprite.at(0).model_to_world_ = turtle_.turtle_to_world; }
           //turtle_.is_after_split = true;
           break;

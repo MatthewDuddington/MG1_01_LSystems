@@ -224,7 +224,7 @@ namespace octet {
         , 0      // Randomise angle
         , 1.0f   // Gravity
         , std::vector<Rule>{ // Variables
-                             { 'X', "F[[X]+X]+F[+FX]-X" },
+                             { 'X', "F-[[X]+X]+F[+FX]-X" },
                              { 'F', "FF" },
                              // Constants
                              { '-' , "-" },
@@ -256,11 +256,11 @@ namespace octet {
     }
 
     const float& LeftRotation() {
-      return - tree_design_->angle_Left;  // Negative because the branch root is at its top
+      return tree_design_->angle_Left;
     }
 
     const float& RightRotation() {
-      return tree_design_->angle_right;  // Positive because the branch root is at its top
+      return - tree_design_->angle_right;
     }
 
     const float& ThinningRatio() {
