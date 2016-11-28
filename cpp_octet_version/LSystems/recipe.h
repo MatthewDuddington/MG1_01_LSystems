@@ -28,7 +28,6 @@ namespace octet {
       float angle_Left;        // Amount to rotate for left direction branches
       float angle_right;       // Amount to rotate for right direction branches
       float randomise_angle;   // Amount to vary branch roatation
-      float gravity;           // Proportion to droop based on distance from trunk
 
       std::vector<Rule> rules;  // Collection of rules for seed generation and drawing processes
     };
@@ -66,47 +65,50 @@ namespace octet {
       printf("ProcessRules\n");
     }
 
-    /*
-    void ImportDesigns(int number_of_designs_to_import) {
+    
+    void ImportDesigns() {
+      Designs().push_back(TreeDesign());
       // Get design file
-      std::string file_location;
-      for (int i = 0; i < number_of_designs_to_import; i++) {
-        file_location = "Resources/tree_design_" + std::to_string(i + 1) + ".txt";  // Construct file path as string.
+      std::ifstream input_file("assets/tree_designs.txt");  // Open file.
 
-        std::ifstream input_file(file_location);  // Open file.
+      if (input_file.bad()) {  // Check if file loaded.
+        printf("ERROR: File was not loaded successfully. \n");
+      }
+      else {
+        TreeDesign imported_design;
 
-        if (input_file.bad()) {  // Check if file loaded.
-          printf("ERROR: File was not loaded successfully. \n");
-        }
-        else {
-          std::string line_buffer;  // Store current line here
+        while (input_file
+          >> imported_design.axiom 
+          >> imported_design.order
+          >> imported_design.axiom_half_size.x()
+          >> imported_design.axiom_half_size.y()
+          >> imported_design.randomise_length
+          >> imported_design.thinning_ratio
+          >> imported_design.angle_Left
+          >> imported_design.angle_right
+          >> imported_design.randomise_angle
+          >> imported_design.rules.at(0).variable
+          >> imported_design.rules.at(0).replacement_symbols
+          >> imported_design.rules.at(1).variable
+          >> imported_design.rules.at(1).replacement_symbols
+          >> imported_design.rules.at(2).variable
+          >> imported_design.rules.at(2).replacement_symbols)
 
-          while (!input_file.eof()) {              // Stop at end of file
-            // Extract the current line to the buffer
-            std::getline(input_file, line_buffer);
-
-            // Add each char from the temporary buffer to the permanent vector
-            for (int i = 0; i < line_buffer.length(); i++) {
-              designs.push_back(line_buffer.at(i));
-            }
-          }
-        }
+          Designs().push_back(imported_design);
       }
     }
-    */
 
     // TODO Get user input of / read from file the variables
-    static void ImportDesigns(int number_of_designs_to_import = 6) {
+    static void ImportDesignsManually() {
 
       TreeDesign user_custom_design{ "F"    //Axiom
         , 5      // Order
         , vec2(0.1f, 0.35f)   // Half size x
         , 0      // Randomise length
         , 0.95f  // Thinning ratio
-        , 25.7f  // Angle left turn
-        , 25.7f  // Angle right turn
+        , 25.0f  // Angle left turn
+        , 25.0f  // Angle right turn
         , 0      // Randomise angle
-        , 1.0f   // Gravity
         , std::vector<Rule>{ // Variables
                              { 'F', "F" },
                              // Constants
@@ -125,7 +127,6 @@ namespace octet {
         , 25.7f  // Angle left turn
         , 25.7f  // Angle right turn
         , 0      // Randomise angle
-        , 1.0f   // Gravity
         , std::vector<Rule>{ // Variables
                              { 'F', "F[+F]F[-F]F" },
                              // Constants
@@ -144,7 +145,6 @@ namespace octet {
         , 20.0f  // Angle left turn
         , 20.0f  // Angle right turn
         , 0      // Randomise angle
-        , 1.0f   // Gravity
         , std::vector<Rule>{ // Variables
                              { 'F', "F[+F]F[-F][F]" },
                              // Constants
@@ -163,7 +163,6 @@ namespace octet {
         , 22.5f  // Angle left turn
         , 22.5f  // Angle right turn
         , 0      // Randomise angle
-        , 1.0f   // Gravity
         , std::vector<Rule>{ // Variables
                              { 'F', "FF-[-F+F+F]+[+F-F-F]" },
                              // Constants
@@ -182,7 +181,6 @@ namespace octet {
         , 20.0f  // Angle left turn
         , 20.0f  // Angle right turn
         , 0      // Randomise angle
-        , 1.0f   // Gravity
         , std::vector<Rule>{ // Variables
                              { 'X', "F[+X]F[-X]+X" },
                              { 'F', "FF" },
@@ -202,7 +200,6 @@ namespace octet {
         , 25.7f  // Angle left turn
         , 25.7f  // Angle right turn
         , 0      // Randomise angle
-        , 1.0f   // Gravity
         , std::vector<Rule>{ // Variables
                              { 'X', "F[+X][-X]FX" },
                              { 'F', "FF" },
@@ -222,7 +219,44 @@ namespace octet {
         , 22.5f  // Angle left turn
         , 22.5f  // Angle right turn
         , 0      // Randomise angle
-        , 1.0f   // Gravity
+        , std::vector<Rule>{ // Variables
+                             { 'X', "F-[[X]+X]+F[+FX]-X" },
+                             { 'F', "FF" },
+                             // Constants
+                             { '-' , "-" },
+                             { '+' , "+" },
+                             { '[' , "[" },
+                             { ']' , "]" },
+          }
+      };
+
+      TreeDesign design_G = { "X"    //Axiom
+        , 5      // Order
+        , vec2(0.2f, 0.35f)   // Half size x
+        , 0      // Randomise length
+        , 0.75f  // Thinning ratio
+        , 22.5f  // Angle left turn
+        , 22.5f  // Angle right turn
+        , 0      // Randomise angle
+        , std::vector<Rule>{ // Variables
+                             { 'X', "F-[[X]+X]+F[+FX]-X" },
+                             { 'F', "FF" },
+                             // Constants
+                             { '-' , "-" },
+                             { '+' , "+" },
+                             { '[' , "[" },
+                             { ']' , "]" },
+          }
+      };
+
+      TreeDesign design_H = { "X"    //Axiom
+        , 5      // Order
+        , vec2(0.2f, 0.35f)   // Half size x
+        , 0      // Randomise length
+        , 0.75f  // Thinning ratio
+        , 22.5f  // Angle left turn
+        , 22.5f  // Angle right turn
+        , 0      // Randomise angle
         , std::vector<Rule>{ // Variables
                              { 'X', "F-[[X]+X]+F[+FX]-X" },
                              { 'F', "FF" },
@@ -242,8 +276,12 @@ namespace octet {
       Designs(&design_D);
       Designs(&design_E);
       Designs(&design_F);
+      Designs(&design_G);
+      Designs(&design_H);
 
     }
+
+
 
   public:
     Recipe() {
@@ -282,7 +320,7 @@ namespace octet {
 
     // Public functions
     void Init() {
-      ImportDesigns();
+      ImportDesignsManually();
       tree_design_ = &Designs().at(0);  // Set default values for custom design
     }
 

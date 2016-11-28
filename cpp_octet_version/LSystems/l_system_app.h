@@ -16,8 +16,7 @@ namespace octet {
 
     enum ProgramState {
       RECIPE_SETTINGS,
-      DRAWING_TREE,
-      VIEWING_SCENE
+      DRAWING_TREE
     };
 
     ProgramState program_state_ = RECIPE_SETTINGS;  // Default state on start
@@ -45,8 +44,8 @@ namespace octet {
     float camera_distance_ = 25;
 
     // Increment / decrement amounts for hotkey paramters
-    float angle_increment_ = 0.5f;  // Rotation Left and Right
-    float size_increment_ = 0.05f;  // Branch Circumference and Length
+    float angle_increment_ = 0.1f;  // Rotation Left and Right
+    float size_increment_ = 0.01f;  // Branch Circumference and Length
 
     /*
     // Function from Octet Invaiderers example
@@ -89,37 +88,45 @@ namespace octet {
     }
 
     void ResetProgram() {
-      tree_.ClearTree();
+      tree_.ClearSprites();
       is_add_to_parameter_ = true;
       is_step_by_step_ = false;
+      tree_.ResetStepByStep();
+      should_reset_camera_zoom_ = true;
       program_state_ = RECIPE_SETTINGS;
       tree_.rotation_load_type_ = Tree::LOAD_FROM_SAVE;
-      Tree::InPolarMode() = false;
+      Tree::InPolarMode() = true;
       printf("Resetting Program...\nProgram state now: Setting Recipe\n");
       PrintRecipeSettingInfo();
     }
 
     void PrintRecipeSettingInfo() {
       printf(
+        "\n"
         "********************************************************************************"
         "\n"
         "INSTRUCTIONS: \n"
-        "  Hold P and press number from 1 to %d to load the prarameters of a predesigned LSystem \n"
+        "  Hold P and press number from 1 to %d to load the prarameters of a \n"
+        "  predesigned LSystem \n"
+        "\n"
         "  Press Enter to enter drawing view \n"
         "\n"
         "  Press 0 to toggle 'Step by step' mode (experimental!) \n"
         "\n"
-        "  Press + or - to switch to incrementing or decrementing the following recipe parameters: \n"
+        "  Press Space Bar to switch to incrementing or decrementing the following \n"
+        "  recipe parameters: \n"
         "      1 -> Max Order      +/- 1  (a.k.a. maximum number of iteration steps) \n"
         "      2 -> Rotation Left  +/- %.1f degrees \n"
         "      3 -> Rotation Right +/- %.1f degrees \n"
         "      4 -> Branch Circumference  +/- %.2f meters \n"
         "      5 -> Branch Length         +/- %.2f meters \n"
+        "      6 -> Branch Thinning Ratio +/- %.2f \% \n"
         "\n"
-        "  Hold S and press the corosponding paramter number to make it stochastic: (experimental!)\n"
-        "      2 -> Rotation Left \n"
-        "      3 -> Rotation Right \n"
+        "  Hold S and press the corosponding parameter number to make it stochastic: \n"
+        "  (experimental!)\n"
+        "      2 or 3 -> Rotation \n"
         "      5 -> Branch Length \n"
+        "      7 -> Leaves \n"
         "\n"
         "  At any time press Esc to return to this recipe settings mode \n"
         "\n"
@@ -190,31 +197,113 @@ namespace octet {
           }
         }
         // Paramter change keys
-        else if (is_key_going_down(key_plus) || is_key_going_down(key_equals)) {  // Plus (equals key on UK English keyboard layout saves having to hold shift)
-          is_add_to_parameter_ = true;
+        else if (is_key_going_down(key_space)) { 
+          is_add_to_parameter_ = !is_add_to_parameter_;
+          if (is_add_to_parameter_) { printf("Incrementing parameters \n"); }
+          else { printf("Decrementing parameters \n"); }
         }
-        else if (is_key_going_down(key_minus)) {  // Minus
-          is_add_to_parameter_ = false;
+        // Stochatic paramters
+        else if (is_key_down(key_S)) {
+          // Angle 
+          if (is_key_going_down(key_2) || is_key_going_down(key_3)) {
+            
+            /*
+            // Reference value for readability
+            float& angle_random_offset = tree_.GetRecipe().CurrentDesign().randomise_angle;
+            // Increment value
+            if (is_add_to_parameter_) { angle_random_offset += angle_increment_; }
+            else { angle_random_offset -= angle_increment_; }
+            // Check bounds
+            if (angle_random_offset < 0.0f) { angle_random_offset = 0.0f; }
+            else if (angle_random_offset > 100.0f) { angle_random_offset = 100.0f; }
+            // Feedback to user
+            printf("Max Order: %d\n", angle_random_offset);
+            */
+          }
+          else if (is_key_going_down(key_5)) {
+
+            /*
+            // Reference value for readability
+            float& branch_length_random_offset = tree_.GetRecipe().CurrentDesign().randomise_length;
+            // Increment value
+            if (is_add_to_parameter_) { branch_length_random_offset += size_increment_; }
+            else { branch_length_random_offset -= size_increment_; }
+            // Check bounds
+            if (branch_length_random_offset < 0.0f) { branch_length_random_offset = 0.0f; }
+            else if (branch_length_random_offset > 100.0f) { branch_length_random_offset = 100.0f; }
+            // Feedback to user
+            printf("Max Order: %d\n", branch_length_random_offset);
+            */
+          }
         }
         // Order
         else if (is_key_going_down(key_1)) {
-          if (is_add_to_parameter_) { tree_.GetRecipe().CurrentDesign().order++; }
-          else { tree_.GetRecipe().CurrentDesign().order--; }
-          printf("Max Order: %d\n", tree_.GetRecipe().CurrentDesign().order);
+          // Reference value for readability
+          int& order = tree_.GetRecipe().CurrentDesign().order;
+          // Increment value
+          if (is_add_to_parameter_) { order++; }
+          else { order--; }
+          // Check bounds
+          if (order < 1) { order = 1; }
+          else if (order > 9) { order = 9; }
+          // Feedback to user
+          printf("Max Order: %d\n", order);
           UpdateUI();
         }
         // Angle Left
         else if (is_key_going_down(key_2)) {
-          if (is_add_to_parameter_) { tree_.GetRecipe().CurrentDesign().angle_Left += angle_increment_; }
-          else { tree_.GetRecipe().CurrentDesign().angle_Left -= angle_increment_; }
-          printf("Angle Left: %d\n", tree_.GetRecipe().CurrentDesign().angle_Left);
+          // Reference value for readability
+          float& angle_left = tree_.GetRecipe().CurrentDesign().angle_Left;
+          // Increment value
+          if (is_add_to_parameter_) { angle_left += angle_increment_; }
+          else { angle_left -= angle_increment_; }
+          // Check bounds
+          if (angle_left < 0.1f) { angle_left = 0.01f; }
+          else if (angle_left > 165.0f) { angle_left = 165.0f; }
+          // Feedback to user
+          printf("Angle Left: %.1f\n", angle_left);
           UpdateUI();
         }
         // Angle Right
         else if (is_key_going_down(key_3)) {
-          if (is_add_to_parameter_) { tree_.GetRecipe().CurrentDesign().angle_right += angle_increment_; }
-          else { tree_.GetRecipe().CurrentDesign().angle_right -= angle_increment_; }
-          printf("Angle Right: %d\n", tree_.GetRecipe().CurrentDesign().angle_right);
+          // Reference value for readability
+          float& angle_right = tree_.GetRecipe().CurrentDesign().angle_right;
+          // Increment value
+          if (is_add_to_parameter_) { angle_right += angle_increment_; }
+          else { angle_right -= angle_increment_; }
+          // Check bounds
+          if (angle_right < 0.1f) { angle_right = 0.01f; }
+          else if (angle_right > 165.0f) { angle_right = 165.0f; }
+          // Feeback to user
+          printf("Angle Right: %.1f\n", angle_right);
+          UpdateUI();
+        }
+        // Branch Circumference
+        else if (is_key_going_down(key_4)) {
+          // Reference value for readability
+          float& circumference = tree_.GetRecipe().CurrentDesign().axiom_half_size.x();
+          // Increment value
+          if (is_add_to_parameter_) { circumference += size_increment_; }
+          else { circumference -= size_increment_; }
+          // Check bounds
+          if (circumference < 0.01f) { circumference = 0.01f; }
+          else if (circumference > 1.0f) { circumference = 1.0f; }
+          // Feeback to user
+          printf("Branch Circumference: %.2f\n", circumference);
+          UpdateUI();
+        }
+        // Branch Length
+        else if (is_key_going_down(key_5)) {
+          // Reference value for readability
+          float& length = tree_.GetRecipe().CurrentDesign().axiom_half_size.y();
+          // Increment value
+          if (is_add_to_parameter_) { length += size_increment_; }
+          else { length -= size_increment_; }
+          // Check bounds
+          if (length < 0.01f) { length = 0.01f; }
+          else if (length > 1.0f) { length = 1.0f; }
+          // Feedback to user
+          printf("Branch Length: %.2f\n", length);
           UpdateUI();
         }
         // Turn 'step by step' mode on / off
@@ -223,6 +312,7 @@ namespace octet {
           if (is_step_by_step_) { printf("Step by step: Active\n"); }
           else { printf("Step by step: Off\n"); }
         }
+        // Toggle between Polar and Matrix modes (Polar works, Matrix has issues with trees C and F)
         else if (is_key_going_down(key_M)) {
           Tree::InPolarMode() = !Tree::InPolarMode();
           if (Tree::InPolarMode()) { printf("Polar mode: Active\n"); }
@@ -237,6 +327,7 @@ namespace octet {
         break;
 
       case octet::LSystemApp::DRAWING_TREE:
+        PrintDrawingInstructions();
         for (int i = 0; i < 9; i++) {
           if (is_key_going_down(key_1 + i)) {
             if (tree_.GrowTree(i + 1, is_step_by_step_) == 0) {
@@ -244,29 +335,24 @@ namespace octet {
               if (!is_step_by_step_ && should_reset_camera_zoom_) { tree_.ResetCameraHeight(); }
               return;
             }
-            else {
-              program_state_ == VIEWING_SCENE;
-              printf("Program state now: Viewing Scene\n");
-              return;
-            }
+            else { UpdateCameraValue(tree_.HeightOfTree()); }  // Set camera height for 'step by step' mode
+            return;
           }
         }
+        // Press C to change camera mode
         if (is_key_going_down(key_C)) {
           should_reset_camera_zoom_ = !should_reset_camera_zoom_;
           if (should_reset_camera_zoom_) { printf("Camera will reset zoom for each iteration\n"); }
           else { printf("Camera will remain at highest point\n"); }
         }
-        else if (is_key_down(key_R)) {
+        // Hold R to change rotation mode
+        else if (is_key_down(key_R)) { 
           if      (is_key_going_down(key_A)) { tree_.rotation_load_type_ = Tree::LOAD_FROM_SAVE;   printf("Rotation from saved position will be loaded upon load position\n"); }
           else if (is_key_going_down(key_S)) { tree_.rotation_load_type_ = Tree::ZERO_OUT;         printf("Rotation will be zeroed out upon load position\n"); }
           else if (is_key_going_down(key_D)) { tree_.rotation_load_type_ = Tree::PRESERVE_CURRENT; printf("Current rotation will be preserved upon load position\n"); }
         }
-        break;
-
-      case octet::LSystemApp::VIEWING_SCENE:
-        if (is_key_going_down(key_enter)) {
-          ResetProgram();
-        }
+        // 
+        else if (is_key_going_down(key_I)) { PrintDrawingInstructions(); }  
         break;
       }
     }

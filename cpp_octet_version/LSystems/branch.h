@@ -43,8 +43,8 @@ namespace octet {
     static Branch& NewBranch( std::vector<Branch>& branches
       ,                       const vec2& parent_half_size
       ,                       const float& thinning_ratio
-      ,                       vec3& tip_colour = vec3(1,1,1)
-      ,                       vec3& root_colour = vec3(1,1,1) )
+      ,                       vec4& tip_colour = vec4(1,1,1,1)
+      ,                       vec4& root_colour = vec4(1,1,1,1) )
     {
       // Add a new branch to the branches vector
       branches.push_back(Branch());
@@ -60,6 +60,10 @@ namespace octet {
           new_branch.half_size_.x(), 0                              , 0,  // Upper right
         - new_branch.half_size_.x(), 0                              , 0   // Upper left
       };
+
+      // Set colours
+      new_branch.tip_colour_ = tip_colour;
+      new_branch.root_colour_ = root_colour;
 
       //printf("Parent: %f, %f    New: %f, %f\n", parent_half_size.x(), parent_half_size.y(), new_branch.half_size_.x(), new_branch.half_size_.y());  // DEBUG
       return new_branch;
@@ -86,7 +90,7 @@ namespace octet {
       // use "old skool" rendering
       //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
       //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-      shader.render(model_to_projection, root_colour_);
+      shader.render(model_to_projection, tip_colour_, root_colour_);
 
       // attribute_pos (=0) is position of each corner
       // each corner has 3 floats (x, y, z)
