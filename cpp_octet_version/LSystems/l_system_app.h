@@ -16,13 +16,14 @@ namespace octet {
 
     enum ProgramState {
       RECIPE_SETTINGS,
-      DRAWING_TREE
+      DRAWING_TREE,
+      VIEWING_TREE
     };
 
     ProgramState program_state_ = RECIPE_SETTINGS;  // Default state on start
 
     bool is_add_to_parameter_ = true;
-    bool is_step_by_step_ = false;
+    bool turtle_step_mode_ = false;
     bool should_reset_camera_zoom_ = true;
 
     // Matrix to transform points in our camera space to the world.
@@ -88,14 +89,19 @@ namespace octet {
     }
 
     void ResetProgram() {
+      // Clear the branches, leaves and turtle to prevent them redisplaying the old tree when next draw state is entered
       tree_.ClearSprites();
+
+      // Reset various defaults
       is_add_to_parameter_ = true;
-      is_step_by_step_ = false;
+      turtle_step_mode_ = false;
       tree_.ResetStepByStep();
       should_reset_camera_zoom_ = true;
       program_state_ = RECIPE_SETTINGS;
       tree_.rotation_load_type_ = Tree::LOAD_FROM_SAVE;
       Tree::InPolarMode() = true;
+
+      // Feedback to user
       printf("Resetting Program...\nProgram state now: Setting Recipe\n");
       PrintRecipeSettingInfo();
     }
@@ -111,7 +117,7 @@ namespace octet {
         "\n"
         "  Press Enter to enter drawing view \n"
         "\n"
-        "  Press 0 to toggle 'Step by step' mode (experimental!) \n"
+        "  Press T to toggle 'turtle step mode' (experimental!) \n"
         "\n"
         "  Press Space Bar to switch to incrementing or decrementing the following \n"
         "  recipe parameters: \n"
@@ -144,7 +150,20 @@ namespace octet {
     }
 
     void PrintDrawingInstructions() {
-
+      printf(
+        "\n"
+        "********************************************************************************"
+        "\n"
+        "INSTRUCTIONS: \n"
+        "  Press keys 1 - 9 to load that iteration step of the tree \n"
+        "  (Up to the value of the maximum order in the recipe)"
+        "\n"
+        "  If in 'Turtle Step Mode' repeatedly press the above key to step through the \n"
+        ""
+        "\n"
+        "********************************************************************************"
+        "\n"
+      );
     }
 
     void UpdateCameraValue(float approx_tree_height) {
@@ -197,16 +216,23 @@ namespace octet {
           }
         }
         // Paramter change keys
-        else if (is_key_going_down(key_space)) { 
+        else if (is_key_going_down(key_space)) {
           is_add_to_parameter_ = !is_add_to_parameter_;
+          // Feedback to user
           if (is_add_to_parameter_) { printf("Incrementing parameters \n"); }
           else { printf("Decrementing parameters \n"); }
+          UpdateUI();
         }
         // Stochatic paramters
         else if (is_key_down(key_S)) {
           // Angle 
           if (is_key_going_down(key_2) || is_key_going_down(key_3)) {
-            
+            tree_.StochasticBranchAngle() = !tree_.StochasticBranchAngle();
+            //Feedback to user
+            if (tree_.StochasticBranchAngle()) { printf("Stochastic Branch Angles: Active \n"); }
+            else { printf("Stochastic Branch Angles: Off \n"); }
+            UpdateUI();
+
             /*
             // Reference value for readability
             float& angle_random_offset = tree_.GetRecipe().CurrentDesign().randomise_angle;
@@ -221,6 +247,11 @@ namespace octet {
             */
           }
           else if (is_key_going_down(key_5)) {
+            tree_.StochasticBranchLength() = !tree_.StochasticBranchLength();
+            // Feedback to user
+            if (tree_.StochasticBranchLength()) { printf("Stochastic Branch Length: Active \n"); }
+            else { printf("Stochastic Branch Length: Off \n"); }
+            UpdateUI();
 
             /*
             // Reference value for readability
@@ -234,6 +265,13 @@ namespace octet {
             // Feedback to user
             printf("Max Order: %d\n", branch_length_random_offset);
             */
+          }
+          else if (is_key_going_down(key_7)) {
+            tree_.StochasticLeaves() = !tree_.StochasticLeaves();
+            // Feedback to user
+            if (tree_.StochasticLeaves()) { printf("Stochastic Leaves: Active \n"); }
+            else { printf("Stochastic Leaves: Off \n"); }
+            UpdateUI();
           }
         }
         // Order
@@ -306,36 +344,42 @@ namespace octet {
           printf("Branch Length: %.2f\n", length);
           UpdateUI();
         }
-        // Turn 'step by step' mode on / off
-        else if (is_key_going_down(key_0)) {
-          is_step_by_step_ = !is_step_by_step_;
-          if (is_step_by_step_) { printf("Step by step: Active\n"); }
-          else { printf("Step by step: Off\n"); }
+        // Turn 'turtle step mode' on / off
+        else if (is_key_going_down(key_T)) {
+          turtle_step_mode_ = !turtle_step_mode_;
+          // Feedback to user
+          if (turtle_step_mode_) { printf("turtle step mode: Active\n"); }
+          else { printf("turtle step mode: Off\n"); }
+          UpdateUI();
         }
         // Toggle between Polar and Matrix modes (Polar works, Matrix has issues with trees C and F)
         else if (is_key_going_down(key_M)) {
           Tree::InPolarMode() = !Tree::InPolarMode();
+          // Feedback to user
           if (Tree::InPolarMode()) { printf("Polar mode: Active\n"); }
           else { printf("Matrix mode: Active\n"); }
+          UpdateUI();
         }
         // Enter tree drawing mode
         else if (is_key_going_down(key_enter)) {
           // TODO Hide input controlls 
           program_state_ = DRAWING_TREE;
           printf("Program state now: Drawing Tree\n");
+          PrintDrawingInstructions();
         }
         break;
 
       case octet::LSystemApp::DRAWING_TREE:
-        PrintDrawingInstructions();
         for (int i = 0; i < 9; i++) {
           if (is_key_going_down(key_1 + i)) {
-            if (tree_.GrowTree(i + 1, is_step_by_step_) == 0) {
+            if (tree_.GrowTree(i + 1, turtle_step_mode_) == 0) {
               UpdateCameraValue(tree_.HeightOfTree());
-              if (!is_step_by_step_ && should_reset_camera_zoom_) { tree_.ResetCameraHeight(); }
+              if (!turtle_step_mode_ && should_reset_camera_zoom_) { tree_.ResetCameraHeight(); }
+              program_state_ = VIEWING_TREE;
+              printf("Program state now: Viewing Tree. Press Esc to return to recipe settings.\n");
               return;
             }
-            else { UpdateCameraValue(tree_.HeightOfTree()); }  // Set camera height for 'step by step' mode
+            else { UpdateCameraValue(tree_.HeightOfTree()); }  // Set camera height for 'turtle step mode'
             return;
           }
         }
@@ -378,7 +422,7 @@ namespace octet {
 
       if (program_state_ == DRAWING_TREE) {
         DrawBranches();
-        if (is_step_by_step_) { tree_.RenderTurtle(colour_shader_, camera_to_world_); }
+        if (turtle_step_mode_) { tree_.RenderTurtle(colour_shader_, camera_to_world_); }
       }
 
       /*

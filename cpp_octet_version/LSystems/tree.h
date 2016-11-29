@@ -19,7 +19,7 @@ namespace octet {
       std::vector<vec3> polar_version_position_stack;  // Stack of saved vec3 postiions
       
       bool is_after_split = true;  // Tells draw forward whether it should thin the next branch
-      int current_seed_step = 0;  // Enables memory of what the turtle should draw next in 'step by step' mode
+      int current_seed_step = 0;  // Enables memory of what the turtle should draw next in 'turtle step mode'
 
       float rotation = 0;  // Keep track of rotation total for Polar mode and remove rotation option
       std::vector<float> rotation_stack;  // Stack of saved rotations for Polar mode and debug reporting
@@ -37,12 +37,12 @@ namespace octet {
 
     Branch* previous_branch_;
 
-    int step_by_step_order_chosen_ = 0;  // Used to remember order while undergoing 'step by step' to prevent the wrong seed being referenced.
+    int step_by_step_order_chosen_ = 0;  // Used to remember order while undergoing 'turtle step mode' to prevent the wrong seed being referenced.
 
     float height_of_tree_ = 0;  // Store the approx highest y value (for camera distance)
-    bool stochastic_branch_angle = false;
-    bool stochastic_branch_length = false;
-    bool stochastic_leaves = false;
+    bool stochastic_branch_angle_ = false;
+    bool stochastic_branch_length_ = false;
+    bool stochastic_leaves_ = false;
 
   public:
     enum RotationLoadType {
@@ -80,6 +80,20 @@ namespace octet {
       return should_use_polar_mode;
     }
 
+    bool& StochasticBranchAngle() {
+      return stochastic_branch_angle_;
+    }
+    
+    bool& StochasticBranchLength() {
+      return stochastic_branch_length_;
+    }
+
+    bool& StochasticLeaves() {
+      return stochastic_leaves_;
+    }
+
+
+
     // Setup drawing scene for new loop
     void ResetForNewTree(bool is_step_by_step, int seed_evolution_order) {
       ClearSprites();
@@ -93,7 +107,7 @@ namespace octet {
       if (InPolarMode()) { turtle_.position = vec3(0, 0, 0); }
       turtle_.rotation = 0;
 
-      // If on 'step by step' mode add the visual marker to the turtle and register the order chosen
+      // If on 'turtle step mode' add the visual marker to the turtle and register the order chosen
       if (is_step_by_step) {
         step_by_step_order_chosen_ = seed_evolution_order;
 
@@ -120,12 +134,12 @@ namespace octet {
       height_of_tree_ = 0;
     }
 
-    // Reset step by step order check to enable new value to be set on new tree
+    // Reset 'turtle step mode' order check to enable new value to be set on new tree
     void ResetStepByStep() {
       step_by_step_order_chosen_ = 0;
     }
 
-    // In 'step by step' mode renders the turtle sprite
+    // In 'turtle step mode' renders the turtle sprite
     void RenderTurtle(color_shader colour_shader, mat4t& camera_to_world) {
       if (turtle_.turtle_sprite.size() != 0) {
         turtle_.turtle_sprite.at(0).Render(colour_shader, camera_to_world);
@@ -134,13 +148,13 @@ namespace octet {
 
     // Main code for following the recipe and laying out tree branches
     int GrowTree(int seed_evolution_order, bool is_step_by_step) {
-      // Prevent accidental change of order mid way through step by step, which can lead to unexpected results or crashes.
+      // Prevent accidental change of order mid way through 'turtle step mode', which can lead to unexpected results or crashes.
       if (is_step_by_step) { if (step_by_step_order_chosen_ != 0) { seed_evolution_order = step_by_step_order_chosen_; } }
       
       // Get a reference to the seed 
       std::string& seed = recipe_.GetSeedEvolution(seed_evolution_order);
 
-      // If this is a new drawings (Want to avoid reseting if in middle of 'step by step' mode)
+      // If this is a new drawings (Want to avoid reseting if in middle of 'turtle step mode')
       if (turtle_.current_seed_step == 0) {
         ResetForNewTree(is_step_by_step, seed_evolution_order);
       }
@@ -148,8 +162,8 @@ namespace octet {
       // How many times should be run through the loop...
       int loop_iterator = 0;
       if (is_step_by_step) {
-        loop_iterator = turtle_.current_seed_step + 1;  // ...in 'step by step', we only want to do one run through the loop, starting at the next seed character
-        // This shouldn't overflow the seed length because of the seed size based end check on 'step by step' mode in GrowTree()
+        loop_iterator = turtle_.current_seed_step + 1;  // ...in 'turtle step mode', we only want to do one run through the loop, starting at the next seed character
+        // This shouldn't overflow the seed length because of the seed size based end check on 'turtle step mode' in GrowTree()
       }
       else { loop_iterator = seed.size(); }  // ...otherwise we want to run through the whole seed
 
@@ -254,6 +268,8 @@ namespace octet {
 
           turtle_.is_after_split = true;
 
+          if (is_step_by_step) { loop_iterator++; }  // Skip to next symbol without needing user to repress key (since nothing visual happens on save / load)
+
           if (seed_evolution_order < 3) { printf("[   \nSaved Position %d on stack, angle is now: %f\n\n", turtle_.matrix_version_position_stack.size(), turtle_.rotation); }  // DEBUG
           break;
 
@@ -281,7 +297,6 @@ namespace octet {
           }
           else {
             // Matrix version
-
             turtle_.turtle_to_world = turtle_.matrix_version_position_stack.at(turtle_.matrix_version_position_stack.size() - 1).ModelToWorld();
             turtle_.matrix_version_position_stack.pop_back();
 
@@ -300,11 +315,14 @@ namespace octet {
 
           turtle_.is_after_split = true;
 
+          if (is_step_by_step) { loop_iterator++; }  // Skip to next symbol without needing user to repress key (since nothing visual happens on save / load)
+
           if (seed_evolution_order < 3) { printf("]   \nLoaded Position %d from stack, angle is now: %f\n\n", turtle_.matrix_version_position_stack.size() + 1, turtle_.rotation); }  // DEBUG
           break;
         }
       }
 
+      // After symbol processed update the 'turtle step mode' turtle graphic and check whether finished
       if (is_step_by_step) {
         turtle_.turtle_sprite.at(0).ModelToWorld() = turtle_.turtle_to_world; // Move the turtle sprite to the turtle's current step position
         turtle_.turtle_sprite.at(0).ModelToWorld().rotateZ(turtle_.rotation);  // Rotate the turtle sprite to match the turtle's current orientation
@@ -313,7 +331,7 @@ namespace octet {
         }
       }
 
-      // Reset turtle step count for next time we draw
+      // Reset 'turtle step mode' count for next time we draw
       turtle_.current_seed_step = 0;
       ResetStepByStep();
 

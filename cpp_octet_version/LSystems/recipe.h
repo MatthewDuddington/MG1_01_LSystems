@@ -336,7 +336,7 @@ namespace octet {
         printf("Order requested is greater than the recipe Order. Reinterpreting request as max order of tree.\n");
         requested_order = CurrentDesign().order;
       }
-      if (requested_order != current_stored_seed_order) {  // If we already have the right seed (usually because of 'step by step' mode) skip calculations
+      if (requested_order != current_stored_seed_order) {  // If we already have the right seed (usually because of 'turtle step mode') skip calculations
         seed_ = CurrentDesign().axiom;  // Reset the starting seed to the axiom
         for (int i = 0; i < requested_order; i++) {
           ProcessRules();  // Generate the instruction set for building the tree

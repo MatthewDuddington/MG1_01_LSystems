@@ -34,10 +34,11 @@ namespace octet {
     key_D = 0x44,
     key_I = 0x49,
     key_M = 0x4D,
-    key_R = 0x52,
-    key_W = 0x57,
     key_P = 0x50,
+    key_R = 0x52,
     key_S = 0x53,
+    key_T,
+    key_W = 0x57,
 
     key_enter = 0x0D,
     key_plus = 0x2B,
