@@ -5,6 +5,8 @@
 
 #include <io.h>
 #include <istream>
+#include <fstream>
+#include <iostream>
 
 #pragma once
 
@@ -65,20 +67,42 @@ namespace octet {
       printf("ProcessRules\n");
     }
 
-    
+    /*
     void ImportDesigns() {
       Designs().push_back(TreeDesign());
       // Get design file
       std::ifstream input_file("assets/tree_designs.txt");  // Open file.
 
-      if (input_file.bad()) {  // Check if file loaded.
-        printf("ERROR: File was not loaded successfully. \n");
-      }
-      else {
+        while (input_file)
+        {
+          string s;
+          if (!getline(infile, s)) break;
+
+          istringstream ss(s);
+          vector <string> record;
+
+          while (ss)
+          {
+            string s;
+            if (!getline(ss, s, ',')) break;
+            record.push_back(s);
+          }
+
+          data.push_back(record);
+        }
+
+
+
         TreeDesign imported_design;
+        char imported_variable0;
+        char* imported_replacement_symbols0[20];
+        char imported_variable1;
+        char* imported_replacement_symbols1[20];
+        char imported_variable2;
+        char* imported_replacement_symbols2[20];
 
         while (input_file
-          >> imported_design.axiom 
+          >> imported_design.axiom
           >> imported_design.order
           >> imported_design.axiom_half_size.x()
           >> imported_design.axiom_half_size.y()
@@ -87,16 +111,23 @@ namespace octet {
           >> imported_design.angle_Left
           >> imported_design.angle_right
           >> imported_design.randomise_angle
-          >> imported_design.rules.at(0).variable
-          >> imported_design.rules.at(0).replacement_symbols
-          >> imported_design.rules.at(1).variable
-          >> imported_design.rules.at(1).replacement_symbols
-          >> imported_design.rules.at(2).variable
-          >> imported_design.rules.at(2).replacement_symbols)
+          >> imported_variable0
+          >> imported_replacement_symbols0
+          >> imported_variable1
+          >> imported_replacement_symbols1
+          >> imported_variable2
+          >> imported_replacement_symbols2)
 
-          Designs().push_back(imported_design);
+        imported_design.rules.at(0).variable = imported_variable0;
+        imported_design.rules.at(0).replacement_symbols = imported_replacement_symbols0;
+        imported_design.rules.at(1).variable = imported_variable1;
+        imported_design.rules.at(1).replacement_symbols = imported_replacement_symbols1;
+        imported_design.rules.at(2).variable = imported_variable2;
+        imported_design.rules.at(2).replacement_symbols = imported_replacement_symbols2;
+        Designs().push_back(imported_design);
       }
     }
+    */
 
     // TODO Get user input of / read from file the variables
     static void ImportDesignsManually() {

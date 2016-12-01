@@ -26,6 +26,8 @@ namespace octet {
     bool turtle_step_mode_ = false;
     bool should_reset_camera_zoom_ = true;
 
+    bool key_already_pressed = false;  // Quick fix for enableing turtle key to be held down
+
     // Matrix to transform points in our camera space to the world.
     // This lets us move our camera
     mat4t camera_to_world_;
@@ -48,7 +50,8 @@ namespace octet {
     float angle_increment_ = 0.1f;  // Rotation Left and Right
     float size_increment_ = 0.01f;  // Branch Circumference and Length
 
-    /*
+
+
     // Function from Octet Invaiderers example
     void draw_text(texture_shader &shader, float x, float y, float scale, const char *text) {
       mat4t modelToWorld;
@@ -57,7 +60,7 @@ namespace octet {
       modelToWorld.scale(scale, scale, 1);
       mat4t modelToProjection = mat4t::build_projection_matrix(modelToWorld, camera_to_world_);
 
-      enum { max_quads = 32 };
+      enum { max_quads = 512 };
       bitmap_font::vertex vertices[max_quads * 4];
       uint32_t indices[max_quads * 6];
       aabb bb(vec3(0, 0, 0), vec3(256, 256, 0));
@@ -75,7 +78,6 @@ namespace octet {
 
       glDrawElements(GL_TRIANGLES, num_quads * 6, GL_UNSIGNED_INT, indices);
     }
-    */
 
     void DrawBranches() {
       std::vector<Branch>& branches = tree_.GetBranches();
@@ -97,6 +99,7 @@ namespace octet {
       turtle_step_mode_ = false;
       tree_.ResetStepByStep();
       should_reset_camera_zoom_ = true;
+      key_already_pressed = false;
       program_state_ = RECIPE_SETTINGS;
       tree_.rotation_load_type_ = Tree::LOAD_FROM_SAVE;
       Tree::InPolarMode() = true;
@@ -149,6 +152,7 @@ namespace octet {
       );
     }
 
+    /*
     void PrintDrawingInstructions() {
       printf(
         "\n"
@@ -158,13 +162,14 @@ namespace octet {
         "  Press keys 1 - 9 to load that iteration step of the tree \n"
         "  (Up to the value of the maximum order in the recipe)"
         "\n"
-        "  If in 'Turtle Step Mode' repeatedly press the above key to step through the \n"
-        ""
+        "  If in 'Turtle Step Mode' repeatedly press or hold down the above key to step \n"
+        "  through the stages the turtle takes to draw the tree."
         "\n"
         "********************************************************************************"
         "\n"
       );
     }
+    */
 
     void UpdateCameraValue(float approx_tree_height) {
       camera_to_world_.loadIdentity();
@@ -175,7 +180,7 @@ namespace octet {
 
   public:
     // this is called when we construct the class
-    LSystemApp(int argc, char **argv) : app(argc, argv) {} // , font_(512, 256, "assets/big.fnt") {}
+    LSystemApp(int argc, char **argv) : app(argc, argv) , font_(512, 256, "big.fnt") {}
 
     // this is called once OpenGL is initialized
     void app_init() {
@@ -189,93 +194,99 @@ namespace octet {
       camera_to_world_.loadIdentity();
       camera_to_world_.translate(0, camera_distance_, camera_distance_);
 
-      //font_texture_ = resource_dict::get_texture_handle(GL_RGBA, "assets/big_0.gif");
+      font_texture_ = resource_dict::get_texture_handle(GL_RGBA, "big_0.gif");
 
       ResetProgram();
     }
 
     void MainLoop() {
+      // Reset
       if (is_key_going_down(key_esc)) {
         ResetProgram();
         return;
       }
 
-      switch (program_state_)
-      {
-      case octet::LSystemApp::RECIPE_SETTINGS:
-        // Display menu
-        if (is_key_going_down(key_I)) {
-          PrintRecipeSettingInfo();
-        }
-        // Premade recipe loaders
-        else if (is_key_down(key_P)) {  // Hold P
-          for (int i = 0; i < tree_.GetRecipe().NumberOfPremadeDesigns(); i++) {  // Prevent array out of bounds
-            if (is_key_going_down(key_1 + i)) {  // Number corisponding to design
-              tree_.GetRecipe().LoadDesign(i + 1);
-            }
+      // Display instructions
+      if (is_key_going_down(key_I)) {
+        PrintRecipeSettingInfo();
+      }
+
+      // Premade recipe loaders
+      else if (is_key_down(key_P)) {  // Hold P
+        for (int i = 0; i < tree_.GetRecipe().NumberOfPremadeDesigns(); i++) {  // Prevent array out of bounds
+          if (is_key_going_down(key_1 + i)) {  // Number corisponding to design
+            tree_.GetRecipe().LoadDesign(i + 1);
           }
         }
-        // Paramter change keys
-        else if (is_key_going_down(key_space)) {
-          is_add_to_parameter_ = !is_add_to_parameter_;
+      }
+      // Paramter change keys
+      else if (is_key_going_down(key_space)) {
+        is_add_to_parameter_ = !is_add_to_parameter_;
+        // Feedback to user
+        if (is_add_to_parameter_) { printf("Incrementing parameters \n"); }
+        else { printf("Decrementing parameters \n"); }
+        UpdateUI();
+      }
+      // Stochatic paramters
+      else if (is_key_down(key_S)) {
+        // Angle 
+        if (is_key_going_down(key_2) || is_key_going_down(key_3)) {
+          tree_.StochasticBranchAngle() = !tree_.StochasticBranchAngle();
+          //Feedback to user
+          if (tree_.StochasticBranchAngle()) { printf("Stochastic Branch Angles: Active \n"); }
+          else { printf("Stochastic Branch Angles: Off \n"); }
+          UpdateUI();
+
+          /*
+          // Reference value for readability
+          float& angle_random_offset = tree_.GetRecipe().CurrentDesign().randomise_angle;
+          // Increment value
+          if (is_add_to_parameter_) { angle_random_offset += angle_increment_; }
+          else { angle_random_offset -= angle_increment_; }
+          // Check bounds
+          if (angle_random_offset < 0.0f) { angle_random_offset = 0.0f; }
+          else if (angle_random_offset > 100.0f) { angle_random_offset = 100.0f; }
           // Feedback to user
-          if (is_add_to_parameter_) { printf("Incrementing parameters \n"); }
-          else { printf("Decrementing parameters \n"); }
+          printf("Max Order: %d\n", angle_random_offset);
+          */
+        }
+        else if (is_key_going_down(key_5)) {
+          tree_.StochasticBranchLength() = !tree_.StochasticBranchLength();
+          // Feedback to user
+          if (tree_.StochasticBranchLength()) { printf("Stochastic Branch Length: Active \n"); }
+          else { printf("Stochastic Branch Length: Off \n"); }
+          UpdateUI();
+
+          /*
+          // Reference value for readability
+          float& branch_length_random_offset = tree_.GetRecipe().CurrentDesign().randomise_length;
+          // Increment value
+          if (is_add_to_parameter_) { branch_length_random_offset += size_increment_; }
+          else { branch_length_random_offset -= size_increment_; }
+          // Check bounds
+          if (branch_length_random_offset < 0.0f) { branch_length_random_offset = 0.0f; }
+          else if (branch_length_random_offset > 100.0f) { branch_length_random_offset = 100.0f; }
+          // Feedback to user
+          printf("Max Order: %d\n", branch_length_random_offset);
+          */
+        }
+        else if (is_key_going_down(key_7)) {
+          tree_.StochasticLeaves() = !tree_.StochasticLeaves();
+          // Feedback to user
+          if (tree_.StochasticLeaves()) { printf("Stochastic Leaves: Active \n"); }
+          else { printf("Stochastic Leaves: Off \n"); }
           UpdateUI();
         }
-        // Stochatic paramters
-        else if (is_key_down(key_S)) {
-          // Angle 
-          if (is_key_going_down(key_2) || is_key_going_down(key_3)) {
-            tree_.StochasticBranchAngle() = !tree_.StochasticBranchAngle();
-            //Feedback to user
-            if (tree_.StochasticBranchAngle()) { printf("Stochastic Branch Angles: Active \n"); }
-            else { printf("Stochastic Branch Angles: Off \n"); }
-            UpdateUI();
+      }
 
-            /*
-            // Reference value for readability
-            float& angle_random_offset = tree_.GetRecipe().CurrentDesign().randomise_angle;
-            // Increment value
-            if (is_add_to_parameter_) { angle_random_offset += angle_increment_; }
-            else { angle_random_offset -= angle_increment_; }
-            // Check bounds
-            if (angle_random_offset < 0.0f) { angle_random_offset = 0.0f; }
-            else if (angle_random_offset > 100.0f) { angle_random_offset = 100.0f; }
-            // Feedback to user
-            printf("Max Order: %d\n", angle_random_offset);
-            */
-          }
-          else if (is_key_going_down(key_5)) {
-            tree_.StochasticBranchLength() = !tree_.StochasticBranchLength();
-            // Feedback to user
-            if (tree_.StochasticBranchLength()) { printf("Stochastic Branch Length: Active \n"); }
-            else { printf("Stochastic Branch Length: Off \n"); }
-            UpdateUI();
 
-            /*
-            // Reference value for readability
-            float& branch_length_random_offset = tree_.GetRecipe().CurrentDesign().randomise_length;
-            // Increment value
-            if (is_add_to_parameter_) { branch_length_random_offset += size_increment_; }
-            else { branch_length_random_offset -= size_increment_; }
-            // Check bounds
-            if (branch_length_random_offset < 0.0f) { branch_length_random_offset = 0.0f; }
-            else if (branch_length_random_offset > 100.0f) { branch_length_random_offset = 100.0f; }
-            // Feedback to user
-            printf("Max Order: %d\n", branch_length_random_offset);
-            */
-          }
-          else if (is_key_going_down(key_7)) {
-            tree_.StochasticLeaves() = !tree_.StochasticLeaves();
-            // Feedback to user
-            if (tree_.StochasticLeaves()) { printf("Stochastic Leaves: Active \n"); }
-            else { printf("Stochastic Leaves: Off \n"); }
-            UpdateUI();
-          }
-        }
+
+      // HOT KEY PARAMTERS //
+
+      // Hold 'O' for options
+      else if (is_key_down(key_O)) {
         // Order
-        else if (is_key_going_down(key_1)) {
+        if (is_key_going_down(key_1)) {
           // Reference value for readability
           int& order = tree_.GetRecipe().CurrentDesign().order;
           // Increment value
@@ -344,60 +355,72 @@ namespace octet {
           printf("Branch Length: %.2f\n", length);
           UpdateUI();
         }
-        // Turn 'turtle step mode' on / off
-        else if (is_key_going_down(key_T)) {
-          turtle_step_mode_ = !turtle_step_mode_;
+        // Branch Thinning Ratio
+        else if (is_key_going_down(key_6)) {
+          // Reference value for readability
+          float& thinning_ratio = tree_.GetRecipe().CurrentDesign().thinning_ratio;
+          // Increment value
+          if (is_add_to_parameter_) { thinning_ratio += size_increment_; }
+          else { thinning_ratio -= size_increment_; }
+          // Check bounds
+          if (thinning_ratio < 0.6f) { thinning_ratio = 0.6f; }
+          else if (thinning_ratio > 1.0f) { thinning_ratio = 1.0f; }
           // Feedback to user
-          if (turtle_step_mode_) { printf("turtle step mode: Active\n"); }
-          else { printf("turtle step mode: Off\n"); }
+          printf("Branch Length: %.2f\n", thinning_ratio);
           UpdateUI();
         }
-        // Toggle between Polar and Matrix modes (Polar works, Matrix has issues with trees C and F)
-        else if (is_key_going_down(key_M)) {
-          Tree::InPolarMode() = !Tree::InPolarMode();
-          // Feedback to user
-          if (Tree::InPolarMode()) { printf("Polar mode: Active\n"); }
-          else { printf("Matrix mode: Active\n"); }
-          UpdateUI();
-        }
-        // Enter tree drawing mode
-        else if (is_key_going_down(key_enter)) {
-          // TODO Hide input controlls 
-          program_state_ = DRAWING_TREE;
-          printf("Program state now: Drawing Tree\n");
-          PrintDrawingInstructions();
-        }
-        break;
+      }
 
-      case octet::LSystemApp::DRAWING_TREE:
-        for (int i = 0; i < 9; i++) {
-          if (is_key_going_down(key_1 + i)) {
-            if (tree_.GrowTree(i + 1, turtle_step_mode_) == 0) {
-              UpdateCameraValue(tree_.HeightOfTree());
-              if (!turtle_step_mode_ && should_reset_camera_zoom_) { tree_.ResetCameraHeight(); }
-              program_state_ = VIEWING_TREE;
-              printf("Program state now: Viewing Tree. Press Esc to return to recipe settings.\n");
-              return;
-            }
-            else { UpdateCameraValue(tree_.HeightOfTree()); }  // Set camera height for 'turtle step mode'
+
+
+      // MODES //
+
+      // Turn 'turtle step mode' on / off
+      else if (is_key_going_down(key_T)) {
+        turtle_step_mode_ = !turtle_step_mode_;
+        // Feedback to user
+        if (turtle_step_mode_) { printf("turtle step mode: Active\n"); }
+        else { printf("turtle step mode: Off\n"); }
+        UpdateUI();
+      }
+      // Toggle between Polar and Matrix modes (Polar works, Matrix has issues with trees C and F)
+      else if (is_key_going_down(key_M)) {
+        Tree::InPolarMode() = !Tree::InPolarMode();
+        // Feedback to user
+        if (Tree::InPolarMode()) { printf("Polar mode: Active\n"); }
+        else { printf("Matrix mode: Active\n"); }
+        UpdateUI();
+      }
+      // Press C to change camera mode
+      else if (is_key_going_down(key_C)) {
+        should_reset_camera_zoom_ = !should_reset_camera_zoom_;
+        if (should_reset_camera_zoom_) { printf("Camera will reset zoom for each iteration\n"); }
+        else { printf("Camera will remain at highest point\n"); }
+      }
+      // Hold R to change rotation mode
+      else if (is_key_down(key_R) && !Tree::InPolarMode()) {
+             if (is_key_going_down(key_A)) { tree_.rotation_load_type_ = Tree::LOAD_FROM_SAVE;   printf("Rotation from saved position will be loaded upon load position\n"); }
+        else if (is_key_going_down(key_S)) { tree_.rotation_load_type_ = Tree::ZERO_OUT;         printf("Rotation will be zeroed out upon load position\n"); }
+        else if (is_key_going_down(key_D)) { tree_.rotation_load_type_ = Tree::PRESERVE_CURRENT; printf("Current rotation will be preserved upon load position\n"); }
+      }
+
+
+
+      // DRAW THE TREE //
+
+      // Draw by iteration
+      for (int i = 0; i < 9; i++) {
+        if (is_key_down(key_1 + i)) {
+          if (!key_already_pressed && tree_.GrowTree(i + 1, turtle_step_mode_) == 0) {
+            key_already_pressed = true;
+            UpdateCameraValue(tree_.HeightOfTree());
+            if (!turtle_step_mode_ && should_reset_camera_zoom_) { tree_.ResetCameraHeight(); }
             return;
           }
+          else { UpdateCameraValue(tree_.HeightOfTree()); }  // Set camera height for 'turtle step mode'
+          if (is_key_going_up(key_1 + i)) { key_already_pressed = false; }
+          return;
         }
-        // Press C to change camera mode
-        if (is_key_going_down(key_C)) {
-          should_reset_camera_zoom_ = !should_reset_camera_zoom_;
-          if (should_reset_camera_zoom_) { printf("Camera will reset zoom for each iteration\n"); }
-          else { printf("Camera will remain at highest point\n"); }
-        }
-        // Hold R to change rotation mode
-        else if (is_key_down(key_R)) { 
-          if      (is_key_going_down(key_A)) { tree_.rotation_load_type_ = Tree::LOAD_FROM_SAVE;   printf("Rotation from saved position will be loaded upon load position\n"); }
-          else if (is_key_going_down(key_S)) { tree_.rotation_load_type_ = Tree::ZERO_OUT;         printf("Rotation will be zeroed out upon load position\n"); }
-          else if (is_key_going_down(key_D)) { tree_.rotation_load_type_ = Tree::PRESERVE_CURRENT; printf("Current rotation will be preserved upon load position\n"); }
-        }
-        // 
-        else if (is_key_going_down(key_I)) { PrintDrawingInstructions(); }  
-        break;
       }
     }
 
@@ -420,20 +443,16 @@ namespace octet {
       glEnable(GL_BLEND);
       glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-      if (program_state_ == DRAWING_TREE) {
-        DrawBranches();
-        if (turtle_step_mode_) { tree_.RenderTurtle(colour_shader_, camera_to_world_); }
-      }
+      DrawBranches();
+      if (turtle_step_mode_) { tree_.RenderTurtle(colour_shader_, camera_to_world_); }
 
-      /*
-      char some_text[32];
+      char some_text[1024];
       sprintf(some_text, "This is text drawn");
       draw_text(texture_shader_, -1.75f, 2, 1.0f / 256, some_text);
 
       // move the listener with the camera
       vec4 &cpos = camera_to_world_.w();
       alListener3f(AL_POSITION, cpos.x(), cpos.y(), cpos.z());
-      */
     }
 
   };

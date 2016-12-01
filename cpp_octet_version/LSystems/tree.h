@@ -179,9 +179,11 @@ namespace octet {
           // Check if thinning is needed
           float thinning_ratio = 1.0f;
           if (turtle_.is_after_split) {
+            /*
             if (turtle_.rotation + 90 > 95.0f && turtle_.rotation + 90 < 85.0f) { thinning_ratio = recipe_.ThinningRatio(); }
             else { thinning_ratio = recipe_.ThinningRatio() + ((1 - recipe_.ThinningRatio()) * 0.5); }
             turtle_.is_after_split = false;
+            */
           }
 
           // Move turtle to end of next brach position
@@ -268,7 +270,7 @@ namespace octet {
 
           turtle_.is_after_split = true;
 
-          if (is_step_by_step) { loop_iterator++; }  // Skip to next symbol without needing user to repress key (since nothing visual happens on save / load)
+          if (is_step_by_step) { loop_iterator++; }  // Skip to next symbol without needing user to repress key (since nothing visual happens on save)
 
           if (seed_evolution_order < 3) { printf("[   \nSaved Position %d on stack, angle is now: %f\n\n", turtle_.matrix_version_position_stack.size(), turtle_.rotation); }  // DEBUG
           break;
@@ -314,8 +316,6 @@ namespace octet {
           }
 
           turtle_.is_after_split = true;
-
-          if (is_step_by_step) { loop_iterator++; }  // Skip to next symbol without needing user to repress key (since nothing visual happens on save / load)
 
           if (seed_evolution_order < 3) { printf("]   \nLoaded Position %d from stack, angle is now: %f\n\n", turtle_.matrix_version_position_stack.size() + 1, turtle_.rotation); }  // DEBUG
           break;
