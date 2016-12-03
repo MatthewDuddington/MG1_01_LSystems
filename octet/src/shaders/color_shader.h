@@ -17,6 +17,7 @@ namespace octet { namespace shaders {
 
     // index for flat shader emissive color
     GLuint emissive_colorIndex_;
+    GLuint secondary_colour_index_;
   public:
     void init() {
       #ifdef OCTET_VITA
@@ -35,7 +36,8 @@ namespace octet { namespace shaders {
         // in the rasterized triangles.
         const char fragment_shader[] = SHADER_STR(
           uniform vec4 emissive_color;
-          void main() {gl_FragColor = emissive_color;}
+          uniform vec4 secondary_colour;
+          void main() { gl_FragColor = emissive_color; } //* gl_FragCoord.xy) + (secondary_colour * (1 - gl_FragCoord.xy));}
         );
     
         // compile and link the shaders
@@ -45,15 +47,17 @@ namespace octet { namespace shaders {
       // set up handles to access the uniforms.
       modelToProjectionIndex_ = glGetUniformLocation(program(), "modelToProjection");
       emissive_colorIndex_ = glGetUniformLocation(program(), "emissive_color");
+      secondary_colour_index_ = glGetUniformLocation(program(), "secondary_colour");
     }
 
     // start drawing with this shader
-    void render(const mat4t &modelToProjection, const vec4 &emissive_color) {
+    void render(const mat4t &modelToProjection, const vec4 &emissive_color, const vec4& secondary_colour) {
       // start using the program
       shader::render();
 
       // set the uniforms.
       glUniform4fv(emissive_colorIndex_, 1, emissive_color.get());
+      glUniform4fv(secondary_colour_index_, 1, secondary_colour.get());
       glUniformMatrix4fv(modelToProjectionIndex_, 1, GL_FALSE, modelToProjection.get());
 
       // now we are ready to define the attributes and draw the triangles.

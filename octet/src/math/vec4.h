@@ -299,32 +299,32 @@ namespace octet { namespace math {
 
     OCTET_HOT vec4 xxxx() const {
       #if OCTET_SSE
-        return vec4(_mm_shuffle_ps(m, m, _MM_SHUFFLE(0,0,0,0)));
-      #else
+        //return vec4(_mm_shuffle_ps(m, m, _MM_SHUFFLE(0,0,0,0)));  // Fixed?!
+      //#else
         return vec4(v[0], v[0], v[0], v[0]);
       #endif
     }
 
     OCTET_HOT vec4 yyyy() const {
       #if OCTET_SSE
-        return vec4(_mm_shuffle_ps(m, m, _MM_SHUFFLE(1,1,1,1)));
-      #else
+       //return vec4(_mm_shuffle_ps(m, m, _MM_SHUFFLE(1,1,1,1)));
+      //#else
         return vec4(v[1], v[1], v[1], v[1]);
       #endif
     }
 
     OCTET_HOT vec4 zzzz() const {
       #if OCTET_SSE
-        return vec4(_mm_shuffle_ps(m, m, _MM_SHUFFLE(2,2,2,2)));
-      #else
+       //return vec4(_mm_shuffle_ps(m, m, _MM_SHUFFLE(2,2,2,2)));
+      //#else
         return vec4(v[2], v[2], v[2], v[2]);
       #endif
     }
 
     OCTET_HOT vec4 wwww() const {
       #if OCTET_SSE
-        return vec4(_mm_shuffle_ps(m, m, _MM_SHUFFLE(3,3,3,3)));
-      #else
+        //return vec4(_mm_shuffle_ps(m, m, _MM_SHUFFLE(3,3,3,3)));
+      //#else
         return vec4(v[3], v[3], v[3], v[3]);
       #endif
     }
