@@ -77,7 +77,7 @@ namespace octet {
 
     // Public functions
     void Init() {
-      RecipeBook::ImportDesigns();
+      RecipeBook::ImportDesignsManually();
       tree_design_ = &RecipeBook::Designs().at(0);  // Set default values for custom design
     }
 
