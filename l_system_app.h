@@ -55,32 +55,34 @@ namespace octet {
 
 
 
-    //// Function from Octet Invaiderers example
-    //void draw_text(texture_shader &shader, float x, float y, float scale, const char *text) {
-    //  mat4t modelToWorld;
-    //  modelToWorld.loadIdentity();
-    //  modelToWorld.translate(x, y, 0);
-    //  modelToWorld.scale(scale, scale, 1);
-    //  mat4t modelToProjection = mat4t::build_projection_matrix(modelToWorld, camera_to_world_);
+    /*
+    // draw_text function from Octet Invaiderers example
+    void draw_text(texture_shader &shader, float x, float y, float scale, const char *text) {
+      mat4t modelToWorld;
+      modelToWorld.loadIdentity();
+      modelToWorld.translate(x, y, 0);
+      modelToWorld.scale(scale, scale, 1);
+      mat4t modelToProjection = mat4t::build_projection_matrix(modelToWorld, camera_to_world_);
 
-    //  enum { max_quads = 512 };
-    //  bitmap_font::vertex vertices[max_quads * 4];
-    //  uint32_t indices[max_quads * 6];
-    //  aabb bb(vec3(0, 0, 0), vec3(256, 256, 0));
+      enum { max_quads = 512 };
+      bitmap_font::vertex vertices[max_quads * 4];
+      uint32_t indices[max_quads * 6];
+      aabb bb(vec3(0, 0, 0), vec3(256, 256, 0));
 
-    //  unsigned num_quads = font_.build_mesh(bb, vertices, indices, max_quads, text, 0);
-    //  glActiveTexture(GL_TEXTURE0);
-    //  glBindTexture(GL_TEXTURE_2D, font_texture_);
+      unsigned num_quads = font_.build_mesh(bb, vertices, indices, max_quads, text, 0);
+      glActiveTexture(GL_TEXTURE0);
+      glBindTexture(GL_TEXTURE_2D, font_texture_);
 
-    //  shader.render(modelToProjection, 0);
+      shader.render(modelToProjection, 0);
 
-    //  glVertexAttribPointer(attribute_pos, 3, GL_FLOAT, GL_FALSE, sizeof(bitmap_font::vertex), (void*)&vertices[0].x);
-    //  glEnableVertexAttribArray(attribute_pos);
-    //  glVertexAttribPointer(attribute_uv, 3, GL_FLOAT, GL_FALSE, sizeof(bitmap_font::vertex), (void*)&vertices[0].u);
-    //  glEnableVertexAttribArray(attribute_uv);
+      glVertexAttribPointer(attribute_pos, 3, GL_FLOAT, GL_FALSE, sizeof(bitmap_font::vertex), (void*)&vertices[0].x);
+      glEnableVertexAttribArray(attribute_pos);
+      glVertexAttribPointer(attribute_uv, 3, GL_FLOAT, GL_FALSE, sizeof(bitmap_font::vertex), (void*)&vertices[0].u);
+      glEnableVertexAttribArray(attribute_uv);
 
-    //  glDrawElements(GL_TRIANGLES, num_quads * 6, GL_UNSIGNED_INT, indices);
-    //}
+      glDrawElements(GL_TRIANGLES, num_quads * 6, GL_UNSIGNED_INT, indices);
+    }
+    */
 
     void DrawBranches() {
       std::vector<Branch>& branches = tree_.GetBranches();
@@ -103,6 +105,7 @@ namespace octet {
       turtle_step_mode_ = false;
       tree_.ResetStepByStep();
       should_reset_camera_zoom_ = true;
+      need_to_refresh_tree_ = true;
 
       // Feedback to user
       PrintInstructions();
@@ -117,22 +120,21 @@ namespace octet {
         "  Hold 'L' and press number from 1 to %d to load the prarameters of a \n"
         "  predesigned LSystem \n"
         "\n"
-        "  Press the numbers '1' - '6' to increment the following recipe parameters: \n"
+        "  Hold 'P' (increment) or 'O' (decrement) and press the numbers '1' - '5' to \n"
+        "  change the following recipe parameters: \n"
         "      1 -> Order      +/- 1                          Currently: %d \n"
         "      2 -> Rotation Left  +/- %.1f degrees            Currently: %.1f deg \n"
         "      3 -> Rotation Right +/- %.1f degrees            Currently: %.1f deg \n"
         "      4 -> Branch Circumference  +/- %.2f meters     Currently: %.2f m \n"
-        "      5 -> Branch Length         +/- %.2f meters     Currently: %.2f m \n"
-        "      6 -> Branch Thinning Ratio +/- %.2f percent    Currently: %.2f \% \n"
-        "  Hold 'Spacebar' while pressing the above keys to decrement instead \n"
+        "      5 -> Branch Thinning Ratio +/- %.2f percent    Currently: %.2f \% \n"
         "\n"
-        "  Hold 'S' and press the corosponding parameter number to make it stochastic: \n"
-        "      2 or 3 -> Branch Rotation \n"
+        "  Hold 'I' and press the corosponding parameter number to make it stochastic: \n"
+        "      3 -> Branch Rotation \n"
         "      5 -> Branch Length \n"
         "      7 -> Leaves (experimental!)\n"
         "\n"
-        "  Press 'T' to toggle 'turtle step mode' (experimental!) \n"
-        "  Press 'M' to toggle polar mode (stable) and matrix mode (experimental!) \n"
+        "  Press 'T' to toggle 'turtle step mode', which draws the branches one at a time \n"
+        "  Press 'M' to toggle matrix mode (experimental!) and polar mode (stable) \n"
         "\n"
         "  Hold 'R' when in matrix mode and press 'A', 'S' or 'D' to switch how rotation \n"
         "  is handled during 'load' drawing steps: \n"
@@ -140,7 +142,7 @@ namespace octet {
         "      S -> Rotation will be zeroed out upon load position \n"
         "      D -> Current rotation will be preserved upon load position \n"
         "\n"
-        "  Press I to print these instructions to the console again \n"
+        "  Press 'H' to print these instructions to the console again \n"
         "\n"
         "********************************************************************************"
         "\n"
@@ -154,8 +156,6 @@ namespace octet {
         size_increment_,
         tree_.GetRecipe().CurrentDesign().axiom_half_size.x(),
         size_increment_,
-        tree_.GetRecipe().CurrentDesign().axiom_half_size.y(),
-        size_increment_,
         tree_.GetRecipe().CurrentDesign().thinning_ratio
       );
     }
@@ -167,23 +167,10 @@ namespace octet {
       float move_z = dx * 0.51f;
       if (dy > dx) { move_z = dy * 0.51f; }
       
-      float min_x = tree_.MaxViewOfTree().x();
-      if (tree_.MaxViewOfTree().x() > abs(tree_.MinViewOfTree().x())) { min_x = tree_.MinViewOfTree().x(); }
-      float move_x = dx * 0.5f - min_x;
+      float move_x = (dx * 0.5f) + tree_.MinViewOfTree().x();
+      float move_y = (dy * 0.5f) + tree_.MinViewOfTree().y();
 
-      float min_y = tree_.MaxViewOfTree().y();
-      if (tree_.MaxViewOfTree().y() > abs(tree_.MinViewOfTree().y())) { min_y = tree_.MinViewOfTree().y(); }
-      float move_y = dy * 0.5f - min_y;
-
-      camera_to_world_.translate( -move_x, +move_y, move_z);
-    }
-
-    void RefreshTree() {
-      if (tree_.GrowTree(current_order_, turtle_step_mode_) == 0) {
-        UpdateCameraValue();
-        if (!turtle_step_mode_ && should_reset_camera_zoom_) { tree_.ResetCameraHeight(); }
-      }
-      else { UpdateCameraValue(); }  // Set camera height for 'turtle step mode'
+      camera_to_world_.translate( move_x, move_y, move_z);
     }
 
 
@@ -238,11 +225,11 @@ namespace octet {
       // RECIPE PARAMTERS //
 
       // Paramter Increment or decrement keys
-      else if (is_add_to_parameter_ && is_key_down(key_space)) {
+      else if (is_add_to_parameter_ && is_key_down(key_O)) {
         is_add_to_parameter_ = false;
         //printf("Decrementing parameters \n");  // DEBUG
       }
-      else if (is_key_going_up(key_space)) {
+      else if (is_key_going_up(key_O)) {
         is_add_to_parameter_ = true;
         //printf("Incrementing parameters \n");  // DEBUG
       }
@@ -306,23 +293,8 @@ namespace octet {
           UpdateUI();
           need_to_refresh_tree_ = true;
         }
-        // Branch Length
-        else if (is_key_down(key_5)) {
-          // Reference value for readability
-          float& length = tree_.GetRecipe().CurrentDesign().axiom_half_size.y();
-          // Increment value
-          if (is_add_to_parameter_) { length += size_increment_; }
-          else { length -= size_increment_; }
-          // Check bounds
-          if (length < 0.01f) { length = 0.01f; }
-          else if (length > 1.0f) { length = 1.0f; }
-          // Feedback to user
-          //printf("Branch Length: %.2f\n", length);  // DEBUG
-          UpdateUI();
-          need_to_refresh_tree_ = true;
-        }
         // Branch Thinning Ratio
-        else if (is_key_down(key_6)) {
+        else if (is_key_down(key_5)) {
           // Reference value for readability
           float& thinning_ratio = tree_.GetRecipe().CurrentDesign().thinning_ratio;
           // Increment value
@@ -342,8 +314,8 @@ namespace octet {
 
       // STOCHATIC PARAMETERS //
 
-      // Hold 'S' for stochatic
-      else if (is_key_down(key_S)) {
+      // Hold 'I' for stochatic options
+      else if (is_key_down(key_I)) {
         // Angle 
         if (is_key_going_down(key_2) || is_key_going_down(key_3)) {
           tree_.StochasticBranchAngle() = !tree_.StochasticBranchAngle();
@@ -425,8 +397,15 @@ namespace octet {
       MainLoop();
 
       if (need_to_refresh_tree_) {
-        if (!turtle_step_mode_) { need_to_refresh_tree_ = false; }
-        RefreshTree();
+        if (tree_.GrowTree(current_order_, turtle_step_mode_) == 0) {
+          UpdateCameraValue();
+          need_to_refresh_tree_ = false;
+          if (!turtle_step_mode_ && should_reset_camera_zoom_) { tree_.ResetCameraHeight(); }
+        }
+        else { 
+          UpdateCameraValue();  // Update camera position for 'turtle step mode'
+          need_to_refresh_tree_ = true;  // Keep looping untill turttle is finished
+        }  
       }
 
       // set a viewport - includes whole window area

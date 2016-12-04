@@ -120,7 +120,7 @@ namespace octet {
       if (is_step_by_step) {
         step_by_step_order_chosen_ = seed_evolution_order;
 
-        Branch::NewBranch(turtle_.turtle_sprite, 0, vec2(0.1f, 0.1f), 1.0f, vec4(1, 0, 0, 1), vec4(0, 0, 1, 1));
+        Branch::NewBranch(turtle_.turtle_sprite, 0, vec2(0.5f, 0.5f), 1.0f, vec4(1, 0, 0, 1), vec4(0, 0, 1, 1));
         turtle_.turtle_sprite.at(0).ModelToWorld().loadIdentity();
       }
     }
