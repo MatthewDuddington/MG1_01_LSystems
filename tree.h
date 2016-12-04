@@ -49,6 +49,8 @@ namespace octet {
     bool stochastic_branch_length_ = false;
     bool stochastic_leaves_ = false;
 
+
+
   public:
     enum RotationLoadType {
       LOAD_FROM_SAVE,
@@ -63,7 +65,6 @@ namespace octet {
     }
 
 
-
     // // Const var getter functions // //
     const vec2 MaxViewOfTree() {
       return max_view_of_tree_;
@@ -72,7 +73,6 @@ namespace octet {
     const vec2 MinViewOfTree() {
       return min_view_of_tree_;
     }
-
 
 
     // // Mutable var getter functions // //
@@ -102,7 +102,6 @@ namespace octet {
     }
 
 
-
     // Setup drawing scene for new loop
     void ResetForNewTree(bool is_step_by_step, int seed_evolution_order) {
       ClearSprites();
@@ -126,8 +125,7 @@ namespace octet {
     }
 
 
-
-    // // Public functions // //
+    // Public functions //
 
     // Used for setup and clearing screen of previous tree on reset and resetting step_by_step_order_chosen_
     void ClearSprites() {
@@ -184,31 +182,32 @@ namespace octet {
         case 'F':  // Draw forwards
         {
           if (seed_evolution_order <= display_data_order_cap_) { printf("F   \nAbout to go forwards. Angle is: %f\n", turtle_.rotation); }  // DEBUG
-          vec2 half_size = previous_branch_->HalfSize();
+          
+          vec2 half_size = previous_branch_->HalfSize();  // TODO Fix for RHV destruction problem?
+          
+          // When active, vary the branch length based on the recipe stochastic parameter
           if (StochasticBranchLength()) { half_size.y() = half_size.y() * random_gen.get(1 - recipe_.CurrentDesign().randomise_length, 1.0f + recipe_.CurrentDesign().randomise_length); }
 
           // Check if thinning is needed
           float thinning_ratio = 1.0f;
-          if (turtle_.is_after_split) {
-            /*
-            if (turtle_.rotation + 90 > 95.0f && turtle_.rotation + 90 < 85.0f) { thinning_ratio = recipe_.ThinningRatio(); }
-            else { thinning_ratio = recipe_.ThinningRatio() + ((1 - recipe_.ThinningRatio()) * 0.5); }
-            turtle_.is_after_split = false;
-            */
-          }
+          if (turtle_.is_after_split) { thinning_ratio = recipe_.ThinningRatio(); }
 
           // Move turtle to end of next brach position
           if (InPolarMode()) {
             // Polar version
+            // Calculate the X and Y components of the vector to be followed by the turtle
             float turtle_polar_rotation_radians = (turtle_.rotation + 90) * atan(1) / 45;
             float new_x_offset = half_size.length() * 2 * cos(turtle_polar_rotation_radians);
             float new_y_offset = half_size.length() * 2 * sin(turtle_polar_rotation_radians);
+            
             if (seed_evolution_order <= display_data_order_cap_) { printf("dx: %f,   dy: %f\n", new_x_offset, new_y_offset); }  // DEBUG
+                                                                                                                  // Move turtle into position and update the Euler position values
             turtle_.turtle_to_world.translate(new_x_offset, new_y_offset, 0);
             turtle_.position += vec3(new_x_offset, new_y_offset, 0);
           }
           else {
             // Matrix version
+            // Move turtle's matrix forward by the length of the branch
             turtle_.turtle_to_world.translate(0, previous_branch_->HalfSize().y() * 2.0f, 0);
           }
 

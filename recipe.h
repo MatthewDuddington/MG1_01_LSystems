@@ -20,7 +20,6 @@ namespace octet {
     std::string seed_ = "";
 
 
-
     // Iterate through the current seed evolution and apply the rules to evolve the seed by another step
     void ProcessRules() {
       std::string new_seed_buffer;  // Store new seed here as it is being built

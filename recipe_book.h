@@ -2,6 +2,7 @@
 
 #include <fstream>
 #include <iostream>
+#include <istream>
 #include <sstream>
 
 namespace octet {
@@ -44,21 +45,43 @@ namespace octet {
       // Get design file
       for (int design_index = 1; design_index <= 9; design_index++) {
         Designs().push_back(TreeDesign());
-        std::string design_file_location = "assets\tree_design_" + std::to_string(design_index) + ".txt";  // Construct file path as string.
-        std::ifstream input_file(design_file_location);  // Open file.
+        std::string design_file_location = "assets\tree_design_" + std::to_string(design_index) + ".txt";  // Construct file path as string
+        std::ifstream input_file(design_file_location);  // Open file
+        
+        //// Simulate file - Used to test import code works correctly due to file system not being navigated correctly by the VS solution
+        //std::vector<std::string> simulated_input_file = {
+        //  "F",
+        //  "5",
+        //  "25.7",
+        //  "25.7",
+        //  "0.3",
+        //  "0.95",
+        //  "0.02",
+        //  "0.6",
+        //  "F",
+        //  "F[+F]F[-F]F"
+        //};
+
         if (input_file.bad()) { printf("File load failed"); }
 
-        int number_of_rules = 4;
-        for (int record = 0; input_file.eof() > 0; record++)
+        Designs().at(design_index).rules = std::vector<Rule>{
+          { '-' , "-" },
+          { '+' , "+" },
+          { '[' , "[" },
+          { ']' , "]" }
+        };
+
+        for (int record = 0; !input_file.eof(); record++)
+        //for (int record = 0; record < simulated_input_file.size(); record++)  // Use for simulated input file
         {
           std::string current_line;
-          std::getline(input_file, current_line, '\n');
+          
+          std::getline(input_file, current_line);
+          //current_line = simulated_input_file.at(record);  // Use for simulated input file
+          
           std::stringstream string_stream(current_line);
           switch (record) {
           case 0:   // Axiom
-            int axiom;
-            string_stream >> axiom;
-            printf("Axiom print test: %d", axiom);
             string_stream >> Designs().at(design_index).axiom;
             break;
           case 1:   // Order
@@ -83,8 +106,11 @@ namespace octet {
             string_stream >> Designs().at(design_index).randomise_angle;
             break;
           default:  // Every other pair of lines should be a variable and some replacement symbols
-            if (record % 2 == 0) { string_stream >> Designs().at(design_index).rules.at(number_of_rules).variable; }
-            else { string_stream >> Designs().at(design_index).rules.at(number_of_rules++).replacement_symbols; }  // ++ AFTER indexing
+            if (record % 2 == 0) {
+              Designs().at(design_index).rules.push_back(Rule());
+              string_stream >> Designs().at(design_index).rules.at(Designs().at(design_index).rules.size() - 1).variable;
+            }
+            else { string_stream >> Designs().at(design_index).rules.at(Designs().at(design_index).rules.size() - 1).replacement_symbols; }
             break;
           }  // End of switch
           Designs().at(design_index).axiom_half_size.y() = 1.0f;

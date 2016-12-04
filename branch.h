@@ -84,13 +84,6 @@ namespace octet {
       return half_size_;
     }
 
-    // Function from Octet Invaiderers example
-    void SetRelative(Branch& rhs, float x, float y)
-    {
-      model_to_world_ = rhs.model_to_world_;
-      model_to_world_.translate(x, y, 0);
-    }
-
     // Function adapted from Octet Invaiderers example
     void Render(color_shader& shader, mat4t& camera_to_world)    // From octet
     {

@@ -4,7 +4,7 @@
 //
 //  Using Octet framework (c) Andy Thomason 2012 - 2014
 //
-//  Using some code with modifications from:
+//  Using draw_world() with modifications from:
 //  Octet Invaiderers example (c) Andy Thomason 2012 - 2014
 //
 
@@ -14,39 +14,26 @@ namespace octet {
 
   class LSystemApp : public octet::app {
 
-    enum ProgramState {
-      RECIPE_SETTINGS,
-      DRAWING_TREE,
-      VIEWING_TREE
-    };
-
-    ProgramState program_state_ = RECIPE_SETTINGS;  // Default state on start
-
-    bool is_add_to_parameter_ = true;
-    bool turtle_step_mode_ = false;
-    bool should_reset_camera_zoom_ = true;
-
-    bool need_to_refresh_tree_ = true;
-
     // Matrix to transform points in our camera space to the world.
     // This lets us move our camera
     mat4t camera_to_world_;
+    
     // shader to draw a textured triangle
     texture_shader texture_shader_;
-    
-    // Texture for our text
-    //GLuint font_texture_;
-    // Information for our text
-    //bitmap_font font_;
 
     // Colour shader for branches etc.
     color_shader colour_shader_;
 
+    // Persistant settings toggles
+    bool is_add_to_parameter_ = true;
+    bool turtle_step_mode_ = false;
+    bool should_reset_camera_zoom_ = true;
+    bool need_to_refresh_tree_ = true;
+
     // For now just work with a single tree
     Tree tree_;
-
-    float camera_distance_ = 25;
     
+    // Keeps note of the current order being requested from the tree (TODO possibly better within the tree itself?)
     int current_order_ = 5;
 
     // Increment / decrement amounts for hotkey paramters
@@ -55,49 +42,8 @@ namespace octet {
 
 
 
-    /*
-    // draw_text function from Octet Invaiderers example
-    void draw_text(texture_shader &shader, float x, float y, float scale, const char *text) {
-      mat4t modelToWorld;
-      modelToWorld.loadIdentity();
-      modelToWorld.translate(x, y, 0);
-      modelToWorld.scale(scale, scale, 1);
-      mat4t modelToProjection = mat4t::build_projection_matrix(modelToWorld, camera_to_world_);
-
-      enum { max_quads = 512 };
-      bitmap_font::vertex vertices[max_quads * 4];
-      uint32_t indices[max_quads * 6];
-      aabb bb(vec3(0, 0, 0), vec3(256, 256, 0));
-
-      unsigned num_quads = font_.build_mesh(bb, vertices, indices, max_quads, text, 0);
-      glActiveTexture(GL_TEXTURE0);
-      glBindTexture(GL_TEXTURE_2D, font_texture_);
-
-      shader.render(modelToProjection, 0);
-
-      glVertexAttribPointer(attribute_pos, 3, GL_FLOAT, GL_FALSE, sizeof(bitmap_font::vertex), (void*)&vertices[0].x);
-      glEnableVertexAttribArray(attribute_pos);
-      glVertexAttribPointer(attribute_uv, 3, GL_FLOAT, GL_FALSE, sizeof(bitmap_font::vertex), (void*)&vertices[0].u);
-      glEnableVertexAttribArray(attribute_uv);
-
-      glDrawElements(GL_TRIANGLES, num_quads * 6, GL_UNSIGNED_INT, indices);
-    }
-    */
-
-    void DrawBranches() {
-      std::vector<Branch>& branches = tree_.GetBranches();
-      for (int i = 1; i < branches.size(); i++) {  // Ignore branch (0) as this is simply to validate the previous branch initial reference
-        branches.at(i).Render(colour_shader_, camera_to_world_);
-      }
-    }
-
-    void UpdateUI() {
-      // TODO draw text to screen
-      PrintInstructions();
-    }
-
+    // Clear the branches, leaves and turtle to prevent them redisplaying the old tree when next draw state is entered
     void ResetProgram() {
-      // Clear the branches, leaves and turtle to prevent them redisplaying the old tree when next draw state is entered
       tree_.ClearSprites();
 
       // Reset various defaults
@@ -111,6 +57,15 @@ namespace octet {
       PrintInstructions();
     }
 
+
+    // TODO Placeholder function to manage the drawing of information to the screen
+    void UpdateUI() {
+      // TODO draw text to screen
+      PrintInstructions();
+    }
+
+
+    // Provide console UI instructions with updating parameter value display
     void PrintInstructions() {
       printf(
         "\n"
@@ -160,46 +115,64 @@ namespace octet {
       );
     }
 
+
+    // Refers to the prepared tree to determin where to position the camera in order to frame the whole design
     void UpdateCameraValue() {
-      camera_to_world_.loadIdentity();
-      float dx = tree_.MaxViewOfTree().x() - tree_.MinViewOfTree().x();
-      float dy = tree_.MaxViewOfTree().y() - tree_.MinViewOfTree().y();
+      float dx = tree_.MaxViewOfTree().x() - tree_.MinViewOfTree().x();  // Total width of the tree
+      float dy = tree_.MaxViewOfTree().y() - tree_.MinViewOfTree().y();  // Total height of the tree
+      // Take the largest of the width and height to be used  as the zoom (position in Z) of the camera
       float move_z = dx * 0.51f;
       if (dy > dx) { move_z = dy * 0.51f; }
       
+      // Find the centre of the design
       float move_x = (dx * 0.5f) + tree_.MinViewOfTree().x();
       float move_y = (dy * 0.5f) + tree_.MinViewOfTree().y();
 
+      // Reset the camera and then position accordingly
+      camera_to_world_.loadIdentity();
       camera_to_world_.translate( move_x, move_y, move_z);
+    }
+
+
+    // Loop through the branches of the tree and render them
+    void DrawBranches() {
+      std::vector<Branch>& branches = tree_.GetBranches();
+      for (int i = 1; i < branches.size(); i++) {  // Ignore branch (0) as this is simply to validate the previous branch initial reference
+        branches.at(i).Render(colour_shader_, camera_to_world_);
+      }
     }
 
 
 
   public:
-    // this is called when we construct the class
-    LSystemApp(int argc, char **argv) : app(argc, argv) {} //, font_(512, 256, "big.fnt") {}
+    // This is called when we construct the class
+    LSystemApp(int argc, char **argv) : app(argc, argv) {}
 
-    // this is called once OpenGL is initialized
+
+    // This is called once OpenGL is initialized
     void app_init() {
       // Set up the shaders
       texture_shader_.init();
       colour_shader_.init();
 
+      // Set up the matrices with a camera
+      camera_to_world_.loadIdentity();
+
+      // Load the predefined recipes and setup initial parameters for modification
       tree_.GetRecipe().Init();
+
+      // Begin in Polar mode as this works for all the trees correctly
       tree_.InPolarMode() = true;
 
-      // set up the matrices with a camera 5 units from the origin
-      camera_to_world_.loadIdentity();
-      camera_to_world_.translate(0, camera_distance_, camera_distance_);
-
-      //font_texture_ = resource_dict::get_texture_handle(GL_RGBA, "big_0.gif");
-
+      // Refresh the program state to begin
       ResetProgram();
     }
 
+
+    // Main controller function (mostly handling input)
     void MainLoop() {
       // Reset
-      if (is_key_going_down(key_esc)) {
+      if (is_key_going_down(key_esc) || is_key_going_down(key_Q)) {
         ResetProgram();
         return;
       }
@@ -220,9 +193,9 @@ namespace octet {
         }
       }
       
-      
-      
-      // RECIPE PARAMTERS //
+      //
+      //  RECIPE PARAMTERS //
+      // 
 
       // Paramter Increment or decrement keys
       else if (is_add_to_parameter_ && is_key_down(key_O)) {
@@ -310,9 +283,9 @@ namespace octet {
         }
       }
 
-
-
+      //
       // STOCHATIC PARAMETERS //
+      //
 
       // Hold 'I' for stochatic options
       else if (is_key_down(key_I)) {
@@ -343,9 +316,9 @@ namespace octet {
         }
       }
 
-
-
+      //
       // ADDITIONAL MODES //
+      //
 
       // Press 'T' to toggle 'turtle step mode'
       else if (is_key_going_down(key_T)) {
@@ -391,17 +364,20 @@ namespace octet {
       }
     }
 
+
     // Function adapted from Octet Invaiderers example
     // Octet calls this (do not refactor name)
     void draw_world(int x, int y, int w, int h) {
-      MainLoop();
+      MainLoop();  // Check for input and changes
 
-      if (need_to_refresh_tree_) {
-        if (tree_.GrowTree(current_order_, turtle_step_mode_) == 0) {
-          UpdateCameraValue();
-          need_to_refresh_tree_ = false;
+      if (need_to_refresh_tree_) {  // If a paramter has been changed (or force called)
+                                    // Process the seed to generate the branch/es
+        if (tree_.GrowTree(current_order_, turtle_step_mode_) == 0) {  
+          UpdateCameraValue();  // Move the camera to fit the whole design on screen
+          need_to_refresh_tree_ = false;  // Prevent recalculations until somthing changes
           if (!turtle_step_mode_ && should_reset_camera_zoom_) { tree_.ResetCameraHeight(); }
         }
+        // GorwTree() returns 1 if in turtle step mode and not yet completed whole seed
         else { 
           UpdateCameraValue();  // Update camera position for 'turtle step mode'
           need_to_refresh_tree_ = true;  // Keep looping untill turttle is finished
@@ -435,5 +411,4 @@ namespace octet {
     }
 
   };
-
 }

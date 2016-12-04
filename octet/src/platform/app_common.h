@@ -37,6 +37,7 @@ namespace octet {
     key_M = 0x4D,
     key_O = 0x4F,
     key_P,
+    key_Q,
     key_R = 0x52,
     key_S = 0x53,
     key_T,

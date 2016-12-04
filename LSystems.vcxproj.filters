@@ -36,4 +36,33 @@
       <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>
+  <ItemGroup>
+    <Text Include="assets\tree_design_1.txt">
+      <Filter>Resource Files</Filter>
+    </Text>
+    <Text Include="assets\tree_design_2.txt">
+      <Filter>Resource Files</Filter>
+    </Text>
+    <Text Include="assets\tree_design_3.txt">
+      <Filter>Resource Files</Filter>
+    </Text>
+    <Text Include="assets\tree_design_4.txt">
+      <Filter>Resource Files</Filter>
+    </Text>
+    <Text Include="assets\tree_design_5.txt">
+      <Filter>Resource Files</Filter>
+    </Text>
+    <Text Include="assets\tree_design_6.txt">
+      <Filter>Resource Files</Filter>
+    </Text>
+    <Text Include="assets\tree_design_7.txt">
+      <Filter>Resource Files</Filter>
+    </Text>
+    <Text Include="assets\tree_design_8.txt">
+      <Filter>Resource Files</Filter>
+    </Text>
+    <Text Include="assets\tree_design_9.txt">
+      <Filter>Resource Files</Filter>
+    </Text>
+  </ItemGroup>
 </Project>

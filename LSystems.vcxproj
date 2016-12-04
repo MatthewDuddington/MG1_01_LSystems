@@ -123,6 +123,17 @@
     <ClInclude Include="tree.h" />
     <ClInclude Include="recipe.h" />
   </ItemGroup>
+  <ItemGroup>
+    <Text Include="assets\tree_design_1.txt" />
+    <Text Include="assets\tree_design_2.txt" />
+    <Text Include="assets\tree_design_3.txt" />
+    <Text Include="assets\tree_design_4.txt" />
+    <Text Include="assets\tree_design_5.txt" />
+    <Text Include="assets\tree_design_6.txt" />
+    <Text Include="assets\tree_design_7.txt" />
+    <Text Include="assets\tree_design_8.txt" />
+    <Text Include="assets\tree_design_9.txt" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
