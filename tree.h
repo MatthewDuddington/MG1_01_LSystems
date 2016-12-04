@@ -244,15 +244,6 @@ namespace octet {
           if (max_view_of_tree_.y() < turtle_.turtle_to_world[3][1]) { max_view_of_tree_.y() = turtle_.turtle_to_world[3][1]; }  // Highest
           if (min_view_of_tree_.x() > turtle_.turtle_to_world[3][0]) { min_view_of_tree_.x() = turtle_.turtle_to_world[3][0]; }  // Left most
           if (min_view_of_tree_.y() > turtle_.turtle_to_world[3][1]) { min_view_of_tree_.y() = turtle_.turtle_to_world[3][1]; }  // Lowest
-          
-          /*
-          if (max_view_of_tree_ < abs(turtle_.turtle_to_world[3][0]) * 0.51f) { max_view_of_tree_ = abs(turtle_.turtle_to_world[3][0]) * 0.51f; }  // Fit widest
-          if (max_view_of_tree_ < abs(turtle_.turtle_to_world[3][1]) * 1.02f) { max_view_of_tree_ = abs(turtle_.turtle_to_world[3][1]) * 1.02f; }  // Fit heighest
-          if ( turtle_.turtle_to_world[3][0] < -max_view_of_tree_ * 1.02f && min_view_of_tree_.x() > turtle_.turtle_to_world[3][0]) 
-          { min_view_of_tree_.x() = turtle_.turtle_to_world[3][0]; }
-          if ( turtle_.turtle_to_world[3][1] < 0 && min_view_of_tree_.y() > turtle_.turtle_to_world[3][1])
-          { min_view_of_tree_.y() = turtle_.turtle_to_world[3][1]; }
-          */
 
           break;
         }

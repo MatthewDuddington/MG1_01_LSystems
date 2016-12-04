@@ -234,7 +234,7 @@ namespace octet {
         //printf("Incrementing parameters \n");  // DEBUG
       }
       // Hold 'P' for parameters
-      else if (is_key_down(key_P)) {
+      else if (is_key_down(key_P) || is_key_down(key_O)) {
         // Order
         if (is_key_going_down(key_1)) {
           // Increment value

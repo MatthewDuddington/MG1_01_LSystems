@@ -56,6 +56,9 @@ namespace octet {
           std::stringstream string_stream(current_line);
           switch (record) {
           case 0:   // Axiom
+            int axiom;
+            string_stream >> axiom;
+            printf("Axiom print test: %d", axiom);
             string_stream >> Designs().at(design_index).axiom;
             break;
           case 1:   // Order
