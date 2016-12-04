@@ -52,7 +52,7 @@ namespace octet {
         for (int record = 0; input_file.eof() > 0; record++)
         {
           std::string current_line;
-          std::getline(input_file, current_line);
+          std::getline(input_file, current_line, '\n');
           std::stringstream string_stream(current_line);
           switch (record) {
           case 0:  // Axiom
@@ -101,8 +101,8 @@ namespace octet {
         , vec2(0.3f, 1.0f)   // Half size x
         , 0.95f  // Thinning ratio
 
-        , 0.5f      // Randomise length
-        , 20.0f      // Randomise angle
+        , 0.02f      // Randomise length
+        , 0.6f      // Randomise angle
       };
 
       TreeDesign design_B = {
@@ -123,8 +123,8 @@ namespace octet {
         , vec2(0.2f, 1.0f)   // Half size x
         , 0.7f  // Thinning ratio
 
-        , 0      // Randomise length
-        , 0      // Randomise angle
+        , 0.06f      // Randomise length
+        , 0.6f      // Randomise angle
       };
 
       TreeDesign design_C = { 
@@ -145,8 +145,8 @@ namespace octet {
         , vec2(0.2f, 1.0f)   // Half size x
         , 1.0f  // Thinning ratio
 
-        , 0      // Randomise length
-        , 0      // Randomise angle
+        , 0.06f      // Randomise length
+        , 0.2f      // Randomise angle
       };
 
       TreeDesign design_D = {
@@ -165,11 +165,11 @@ namespace octet {
           { 'F', "FF" }
           }
 
-        , vec2(0.3f, 1.0f)   // Half size x
+        , vec2(0.5f, 1.0f)   // Half size x
         , 0.95f  // Thinning ratio
 
-        , 0      // Randomise length
-        , 0      // Randomise angle
+        , 0.02f      // Randomise length
+        , 0.6f      // Randomise angle
       };
 
       TreeDesign design_E = {
@@ -188,14 +188,15 @@ namespace octet {
           { 'F', "FF" }
           }
 
-        , vec2(0.3f, 1.0f)   // Half size x
+        , vec2(0.5f, 1.0f)   // Half size x
         , 0.95f  // Thinning ratio
 
-        , 0      // Randomise length
-        , 0      // Randomise angle
+        , 0.02f      // Randomise length
+        , 0.6f      // Randomise angle
       };
 
-      TreeDesign design_F = { "X"    //Axiom
+      TreeDesign design_F = { 
+          "X"    //Axiom
         , 5      // Order
         , 22.5f  // Angle left turn
         , 22.5f  // Angle right turn
@@ -208,36 +209,62 @@ namespace octet {
             // Variables
           { 'X', "F-[[X]+X]+F[+FX]-X" },
           { 'F', "FF" }
-      }
+          }
 
         , vec2(0.2f, 1.0f)   // Half size x
         , 0.75f  // Thinning ratio
 
-        , 0      // Randomise length
-        , 0      // Randomise angle
+        , 0.02f      // Randomise length
+        , 0.6f      // Randomise angle
       };
 
-      TreeDesign design_G = { "F"    //Axiom
-        , 4      // Order
-        , 90.0f  // Angle left turn
-        , 90.0f  // Angle right turn
+      //TreeDesign design_G = { 
+      //    "F"    //Axiom
+      //  , 4      // Order
+      //  , 90.0f  // Angle left turn
+      //  , 90.0f  // Angle right turn
+      //  , std::vector<Rule>{
+      //      // Constants
+      //    { '-' , "-" },
+      //    { '+' , "+" },
+      //    { '[' , "[" },
+      //    { ']' , "]" },
+      //      // Variables
+      //    { 'F', "F+F-F-F+F" }
+      //    }
+
+      //  , vec2(0.3f, 1.0f)   // Half size x
+      //  , 0.75f  // Thinning ratio
+
+      //  , 0      // Randomise length
+      //  , 0      // Randomise angle
+      //};
+
+
+      TreeDesign design_G = {
+        "F"    //Axiom
+        , 5      // Order
+        , 10.0f  // Angle left turn
+        , 10.0f  // Angle right turn
         , std::vector<Rule>{
-            // Constants
+        // Constants
           { '-' , "-" },
           { '+' , "+" },
           { '[' , "[" },
           { ']' , "]" },
             // Variables
-          { 'F', "F+F-F-F+F" }
+          { 'F', "-F[-F]+" }
       }
 
-        , vec2(0.7f, 1.0f)   // Half size x
-        , 0      // Randomise length
+      , vec2(0.3f, 1.0f)   // Half size x
         , 0.75f  // Thinning ratio
+
+        , 0      // Randomise length
         , 0      // Randomise angle
       };
 
-      TreeDesign design_H = { "F-G-G"    //Axiom
+      TreeDesign design_H = { 
+          "F-G-G"    //Axiom
         , 7      // Order
         , 120.0f  // Angle left turn
         , 120.0f  // Angle right turn
@@ -250,17 +277,18 @@ namespace octet {
             // Variables
           { 'F', "F-G+F+G-F" },
           { 'G', "GG" }
-      }
+          }
 
-        , vec2(0.2f, 1.0f)   // Half size x
+        , vec2(0.3f, 1.0f)   // Half size x
         , 0.75f  // Thinning ratio
 
         , 0      // Randomise length
         , 0      // Randomise angle
       };
 
-      TreeDesign design_I = { "FX"    //Axiom
-        , 7      // Order
+      TreeDesign design_I = { 
+          "FX"    //Axiom
+        , 10      // Order
         , 90.0f  // Angle left turn
         , 90.0f  // Angle right turn
         , std::vector<Rule>{
@@ -272,9 +300,9 @@ namespace octet {
             // Variables
           { 'X', "X+YF+" },
           { 'Y', "-FX-Y" }
-      }
+          }
 
-      , vec2(0.2f, 1.0f)   // Half size x
+        , vec2(0.3f, 1.0f)   // Half size x
         , 0.75f  // Thinning ratio
 
         , 0      // Randomise length

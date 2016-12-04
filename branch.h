@@ -18,12 +18,16 @@ namespace octet {
    
     std::array<float, 12> vertices_;
     
-    int depth_from_trunk;
+    int depth_from_trunk_ = 0;
 
     vec2 half_size_ = (1.0f, 1.0f);
 
-    vec4 root_colour_ = { 0.66f, 0.63f, 0.51f, 1 };
-    vec4 tip_colour_ = { 0.7f, 0.67f, 0.59f, 1 };
+    vec4 axiom_tip_colour_ = { 0.7f, 0.67f, 0.59f, 1 };
+    vec4 axiom_root_colour_ = { 0.66f, 0.63f, 0.51f, 1 };
+    vec4 root_colour_ = axiom_root_colour_;
+    vec4 tip_colour_ = axiom_tip_colour_;
+
+    float darkening_factor_ = 0.2f;
 
 
 
@@ -31,6 +35,10 @@ namespace octet {
     // Mutable var getter functions
     mat4t& ModelToWorld() {
       return model_to_world_;
+    }
+
+    int DepthFronTrunk() {
+      return depth_from_trunk_;
     }
 
 
@@ -41,10 +49,11 @@ namespace octet {
     // initialises the new branche's size and vertex positions,
     // returns a reference to the new branch.
     static Branch& NewBranch( std::vector<Branch>& branches
+      ,                       int depth_from_trunk
       ,                       const vec2& parent_half_size
       ,                       const float& thinning_ratio
-      ,                       vec4& tip_colour = vec4(1,1,1,1)
-      ,                       vec4& root_colour = vec4(1,1,1,1) )
+      ,                       vec4& tip_colour = vec4(0.7f, 0.67f, 0.59f, 1)
+      ,                       vec4& root_colour = vec4(0.66f, 0.63f, 0.51f, 1) )
     {
       // Add a new branch to the branches vector
       branches.push_back(Branch());
@@ -60,6 +69,8 @@ namespace octet {
           new_branch.half_size_.x(), 0                              , 0,  // Upper right
         - new_branch.half_size_.x(), 0                              , 0   // Upper left
       };
+
+      new_branch.depth_from_trunk_ = depth_from_trunk;
 
       // Set colours
       new_branch.tip_colour_ = tip_colour;

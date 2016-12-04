@@ -1,17 +1,12 @@
 Fragment shader error:
-0(1) : warning C7011: implicit cast from "vec4" to "vec2"
-0(1) : warning C7011: implicit cast from "int" to "float"
-0(1) : warning C7011: implicit cast from "vec4" to "vec2"
-0(1) : error C1035: assignment of incompatible types
+(0) : error C0000: syntax error, unexpected $end at token "<EOF>"
 
-uniform vec4 emissive_color; uniform vec4 secondary_colour; void main() {gl_FragColor = (emissive_color * gl_FragCoord.xy) + (secondary_colour * (1 - gl_FragCoord.xy));}
+uniform vec4 emissive_color; uniform vec4 secondary_colour; void main() { gl_FragColor = emissive_color;
 
 
 
 program errors during linking
 Fragment info
 -------------
-0(1) : warning C7011: implicit cast from "vec4" to "vec2"
-0(1) : warning C7011: implicit cast from "int" to "float"
-0(1) : warning C7011: implicit cast from "vec4" to "vec2"
-0(1) : error C1035: assignment of incompatible types
+(0) : error C0000: syntax error, unexpected $end at token "<EOF>"
+(0) : error C9000: internal corruption, aborting

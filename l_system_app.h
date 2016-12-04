@@ -26,7 +26,7 @@ namespace octet {
     bool turtle_step_mode_ = false;
     bool should_reset_camera_zoom_ = true;
 
-    bool need_to_update_screen_ = true;
+    bool need_to_refresh_tree_ = true;
 
     // Matrix to transform points in our camera space to the world.
     // This lets us move our camera
@@ -83,13 +83,6 @@ namespace octet {
     //}
 
     void DrawBranches() {
-      // Draw by iteration
-      if (tree_.GrowTree(current_order_, turtle_step_mode_) == 0) {
-        UpdateCameraValue(tree_.MaxViewOfTree());
-        if (!turtle_step_mode_ && should_reset_camera_zoom_) { tree_.ResetCameraHeight(); }
-      }
-      else { UpdateCameraValue(tree_.MaxViewOfTree()); }  // Set camera height for 'turtle step mode'
-      
       std::vector<Branch>& branches = tree_.GetBranches();
       for (int i = 1; i < branches.size(); i++) {  // Ignore branch (0) as this is simply to validate the previous branch initial reference
         branches.at(i).Render(colour_shader_, camera_to_world_);
@@ -126,18 +119,17 @@ namespace octet {
         "\n"
         "  Press the numbers '1' - '6' to increment the following recipe parameters: \n"
         "      1 -> Order      +/- 1                          Currently: %d \n"
-        "      2 -> Rotation Left  +/- %.1f degrees          Currently: %.1f deg \n"
-        "      3 -> Rotation Right +/- %.1f degrees          Currently: %.1f deg \n"
+        "      2 -> Rotation Left  +/- %.1f degrees            Currently: %.1f deg \n"
+        "      3 -> Rotation Right +/- %.1f degrees            Currently: %.1f deg \n"
         "      4 -> Branch Circumference  +/- %.2f meters     Currently: %.2f m \n"
         "      5 -> Branch Length         +/- %.2f meters     Currently: %.2f m \n"
-        "      6 -> Branch Thinning Ratio +/- %.2f \%         Currently: %.2f \% \n"
+        "      6 -> Branch Thinning Ratio +/- %.2f percent    Currently: %.2f \% \n"
         "  Hold 'Spacebar' while pressing the above keys to decrement instead \n"
         "\n"
         "  Hold 'S' and press the corosponding parameter number to make it stochastic: \n"
-        "  (experimental!)\n"
         "      2 or 3 -> Branch Rotation \n"
         "      5 -> Branch Length \n"
-        "      7 -> Leaves \n"
+        "      7 -> Leaves (experimental!)\n"
         "\n"
         "  Press 'T' to toggle 'turtle step mode' (experimental!) \n"
         "  Press 'M' to toggle polar mode (stable) and matrix mode (experimental!) \n"
@@ -168,9 +160,30 @@ namespace octet {
       );
     }
 
-    void UpdateCameraValue(float approx_tree_height) {
+    void UpdateCameraValue() {
       camera_to_world_.loadIdentity();
-      camera_to_world_.translate(0, approx_tree_height * 0.5f, approx_tree_height * 0.5f);
+      float dx = tree_.MaxViewOfTree().x() - tree_.MinViewOfTree().x();
+      float dy = tree_.MaxViewOfTree().y() - tree_.MinViewOfTree().y();
+      float move_z = dx * 0.51f;
+      if (dy > dx) { move_z = dy * 0.51f; }
+      
+      float min_x = tree_.MaxViewOfTree().x();
+      if (tree_.MaxViewOfTree().x() > abs(tree_.MinViewOfTree().x())) { min_x = tree_.MinViewOfTree().x(); }
+      float move_x = dx * 0.5f - min_x;
+
+      float min_y = tree_.MaxViewOfTree().y();
+      if (tree_.MaxViewOfTree().y() > abs(tree_.MinViewOfTree().y())) { min_y = tree_.MinViewOfTree().y(); }
+      float move_y = dy * 0.5f - min_y;
+
+      camera_to_world_.translate( -move_x, +move_y, move_z);
+    }
+
+    void RefreshTree() {
+      if (tree_.GrowTree(current_order_, turtle_step_mode_) == 0) {
+        UpdateCameraValue();
+        if (!turtle_step_mode_ && should_reset_camera_zoom_) { tree_.ResetCameraHeight(); }
+      }
+      else { UpdateCameraValue(); }  // Set camera height for 'turtle step mode'
     }
 
 
@@ -186,6 +199,7 @@ namespace octet {
       colour_shader_.init();
 
       tree_.GetRecipe().Init();
+      tree_.InPolarMode() = true;
 
       // set up the matrices with a camera 5 units from the origin
       camera_to_world_.loadIdentity();
@@ -214,6 +228,7 @@ namespace octet {
           if (is_key_going_down(key_1 + i)) {  // Number corisponding to design
             tree_.GetRecipe().LoadDesign(i + 1);
             current_order_ = tree_.GetRecipe().CurrentDesign().order;
+            need_to_refresh_tree_ = true;
           }
         }
       }
@@ -244,7 +259,7 @@ namespace octet {
           // Feedback to user
           //printf("Order: %d\n", current_order_);  // DEBUG
           UpdateUI();
-          need_to_update_screen_ = true;
+          need_to_refresh_tree_ = true;
         }
         // Angle Left
         else if (is_key_down(key_2)) {
@@ -259,7 +274,7 @@ namespace octet {
           // Feedback to user
           //printf("Angle Left: %.1f\n", angle_left);  // DEBUG
           UpdateUI();
-          need_to_update_screen_ = true;
+          need_to_refresh_tree_ = true;
         }
         // Angle Right
         else if (is_key_down(key_3)) {
@@ -274,7 +289,7 @@ namespace octet {
           // Feeback to user
           //printf("Angle Right: %.1f\n", angle_right);  // DEBUG
           UpdateUI();
-          need_to_update_screen_ = true;
+          need_to_refresh_tree_ = true;
         }
         // Branch Circumference
         else if (is_key_down(key_4)) {
@@ -289,7 +304,7 @@ namespace octet {
           // Feeback to user
           //printf("Branch Circumference: %.2f\n", circumference);  // DEBUG
           UpdateUI();
-          need_to_update_screen_ = true;
+          need_to_refresh_tree_ = true;
         }
         // Branch Length
         else if (is_key_down(key_5)) {
@@ -304,7 +319,7 @@ namespace octet {
           // Feedback to user
           //printf("Branch Length: %.2f\n", length);  // DEBUG
           UpdateUI();
-          need_to_update_screen_ = true;
+          need_to_refresh_tree_ = true;
         }
         // Branch Thinning Ratio
         else if (is_key_down(key_6)) {
@@ -319,7 +334,7 @@ namespace octet {
           // Feedback to user
           //printf("Branch Thinning Ratio: %.2f\n", thinning_ratio);  // DEBUG
           UpdateUI();
-          need_to_update_screen_ = true;
+          need_to_refresh_tree_ = true;
         }
       }
 
@@ -336,7 +351,7 @@ namespace octet {
           if (tree_.StochasticBranchAngle()) { printf("Stochastic Branch Angles: Active \n"); }
           else { printf("Stochastic Branch Angles: Off \n"); }
           UpdateUI();
-          need_to_update_screen_ = true;
+          need_to_refresh_tree_ = true;
         }
         else if (is_key_going_down(key_5)) {
           tree_.StochasticBranchLength() = !tree_.StochasticBranchLength();
@@ -344,7 +359,7 @@ namespace octet {
           if (tree_.StochasticBranchLength()) { printf("Stochastic Branch Length: Active \n"); }
           else { printf("Stochastic Branch Length: Off \n"); }
           UpdateUI();
-          need_to_update_screen_ = true;
+          need_to_refresh_tree_ = true;
         }
         else if (is_key_going_down(key_7)) {
           tree_.StochasticLeaves() = !tree_.StochasticLeaves();
@@ -352,7 +367,7 @@ namespace octet {
           if (tree_.StochasticLeaves()) { printf("Stochastic Leaves: Active \n"); }
           else { printf("Stochastic Leaves: Off \n"); }
           UpdateUI();
-          need_to_update_screen_ = true;
+          need_to_refresh_tree_ = true;
         }
       }
 
@@ -367,7 +382,7 @@ namespace octet {
         if (turtle_step_mode_) { printf("turtle step mode: Active\n"); }
         else { printf("turtle step mode: Off\n"); }
         UpdateUI();
-        need_to_update_screen_ = true;
+        need_to_refresh_tree_ = true;
       }
       // Press 'M' to toggle between Polar and Matrix modes (Polar works, Matrix has issues with trees C and F)
       else if (is_key_going_down(key_M)) {
@@ -376,7 +391,7 @@ namespace octet {
         if (Tree::InPolarMode()) { printf("Polar mode: Active\n"); }
         else { printf("Matrix mode: Active\n"); }
         UpdateUI();
-        need_to_update_screen_ = true;
+        need_to_refresh_tree_ = true;
       }
       // Press 'C' to toggle camera mode
       else if (is_key_going_down(key_C)) {
@@ -389,17 +404,17 @@ namespace octet {
         if (is_key_going_down(key_A)) { 
           tree_.rotation_load_type_ = Tree::LOAD_FROM_SAVE;
           printf("Rotation from saved position will be loaded upon load position\n"); 
-          need_to_update_screen_ = true;
+          need_to_refresh_tree_ = true;
         }
         else if (is_key_going_down(key_S)) { 
           tree_.rotation_load_type_ = Tree::ZERO_OUT;
           printf("Rotation will be zeroed out upon load position\n"); 
-          need_to_update_screen_ = true;
+          need_to_refresh_tree_ = true;
         }
         else if (is_key_going_down(key_D)) { 
           tree_.rotation_load_type_ = Tree::PRESERVE_CURRENT; 
           printf("Current rotation will be preserved upon load position\n"); 
-          need_to_update_screen_ = true;
+          need_to_refresh_tree_ = true;
         }
       }
     }
@@ -409,26 +424,27 @@ namespace octet {
     void draw_world(int x, int y, int w, int h) {
       MainLoop();
 
-      //if (need_to_update_screen_) {
-        need_to_update_screen_ = false;
+      if (need_to_refresh_tree_) {
+        if (!turtle_step_mode_) { need_to_refresh_tree_ = false; }
+        RefreshTree();
+      }
 
-        // set a viewport - includes whole window area
-        glViewport(x, y, w, h);
+      // set a viewport - includes whole window area
+      glViewport(x, y, w, h);
 
-        // clear the background to black
-        glClearColor(0, 0, 0, 1);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+      // clear the background to black
+      glClearColor(0, 0, 0, 1);
+      glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        // don't allow Z buffer depth testing (closer objects are always drawn in front of far ones)
-        glDisable(GL_DEPTH_TEST);
+      // don't allow Z buffer depth testing (closer objects are always drawn in front of far ones)
+      glDisable(GL_DEPTH_TEST);
 
-        // allow alpha blend (transparency when alpha channel is 0)
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+      // allow alpha blend (transparency when alpha channel is 0)
+      glEnable(GL_BLEND);
+      glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-        DrawBranches();
-        if (turtle_step_mode_) { tree_.RenderTurtle(colour_shader_, camera_to_world_); }
-      //}
+      DrawBranches();
+      if (turtle_step_mode_) { tree_.RenderTurtle(colour_shader_, camera_to_world_); }
 
       /*char some_text[1024];
       sprintf(some_text, "This is text drawn");
